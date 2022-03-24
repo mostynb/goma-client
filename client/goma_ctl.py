@@ -14,7 +14,7 @@ It starts/stops compiler_proxy.exe or compiler_proxy.
 
 
 import collections
-import copy
+import csv
 import ctypes
 import datetime
 import glob
@@ -23,7 +23,6 @@ import hashlib
 import io
 import json
 import os
-import posixpath
 import random
 import re
 import shutil
@@ -36,7 +35,6 @@ import tarfile
 import tempfile
 import time
 import urllib.request
-import zipfile
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 _DEFAULT_ENV = [
@@ -131,91 +129,6 @@ def _ParseManifestContents(manifest):
     if len(pair) == 2:
       output[pair[0].strip()] = pair[1].strip()
   return output
-
-
-def _ParseTaskList(data):
-  """Parse tasklist command result.
-
-  e.g. If |data| is like:
-  |
-  | Image name      PID  Session Name
-  |
-  | ============== ==== =============
-  |
-  | compiler.exe    123       Console
-  | system.exe      456        System
-  |
-  This function returns:
-  | [{'Image name': 'compiler.exe', 'PID': '123', 'Session Name': 'Console'},
-  |  {'Image name': 'system.exe', 'PID': '456', 'Session Name': 'System'}]
-
-  Args:
-    data: result of tasklist command.
-
-  Return:
-    a list of dictionaries parsed from the data.
-
-  Raises:
-    Error if it failed to parse.
-  """
-  labels = []
-  offsets = []
-  contents = []
-  lines = [x for x in data.splitlines() if x.strip()]
-
-  if len(lines) < 2:
-    raise Error('tasklist result is too short: %s' % data)
-
-  label_line = lines[0]
-  sep_line = lines[1]
-  # Parse separater line ('== ==')
-  idx = 0
-  while idx < len(sep_line):
-    begin = sep_line.find('=', idx)
-    if begin < 0:
-      break
-    end = sep_line.find(' ', idx)
-    if end < 0:
-      offsets.append((begin, len(sep_line)))
-      break
-    offsets.append((begin, end))
-    idx = end + 1
-
-  def ParseEntries(line):
-    """Parse entries from line."""
-    entries = []
-    for begin, end in offsets:
-      if len(line) < begin:
-        # We detect lack of column.
-        # e.g. compiler.exe does not have PID entry:
-        # | Image name      PID\n
-        # | ============== ====\n
-        # | compiler.exe\n
-        #
-        # Note that we allow white space column, which will be '':
-        # e.g.
-        # | Image name      PID\n
-        # | ============== ====\n
-        # | compiler.exe       \n
-        raise Error('line does not have enough entries to parse: %s' % data)
-      if len(line) > end and line[end] != ' ':
-        # We detect lack of delimiter.
-        # e.g.
-        # | Image name      PID\n
-        # | ============== ====\n
-        # | aaaaaaaaaaaaaaaaaaa\n
-        raise Error('no delimiter between columns: %s' % data)
-      entries.append(line[begin:end].strip())
-    return entries
-
-  # Parse label line.
-  labels = ParseEntries(label_line)
-
-  for line in lines[2:]:
-    if not line:
-      continue
-    contents.append(dict(zip(labels, ParseEntries(line))))
-  return contents
 
 
 def _ParseLsof(data):
@@ -2114,14 +2027,17 @@ class GomaEnvWin(GomaEnv):
 
   def _GetProcessImagePid(self, image_name):
     """Returns process ID of the image."""
-    process = PopenWithCheck(['tasklist', '/FI',
-                              'IMAGENAME eq %s' % image_name],
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = PopenWithCheck(
+        ['tasklist', '/FO', 'csv', '/FI',
+         'IMAGENAME eq %s' % image_name],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        encoding='oem')
     output = process.communicate()[0]
     if image_name not in output:
       return []
     pids = []
-    for entry in _ParseTaskList(output):
+    for entry in csv.DictReader(output.splitlines(), quoting=csv.QUOTE_ALL):
       try:
         pids.append(entry['PID'])
       except KeyError:
@@ -2148,9 +2064,12 @@ class GomaEnvWin(GomaEnv):
     pids = self._GetStakeholderPids()
     print('ports are owned by following processes:')
     for pid in pids:
-      print(PopenWithCheck(['tasklist', '/FI', 'PID eq %s' % pid],
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT).communicate()[0])
+      print(
+          PopenWithCheck(
+              ['tasklist', '/FI', 'PID eq %s' % pid],
+              stdout=subprocess.PIPE,
+              stderr=subprocess.STDOUT,
+              encoding='oem').communicate()[0])
 
   def GetGomaCtlScriptName(self):
     return os.environ.get('GOMA_CTL_SCRIPT_NAME', self._GOMA_CTL_SCRIPT_NAME)
@@ -2166,7 +2085,8 @@ class GomaEnvWin(GomaEnv):
     ports.append(os.environ.get('GOMA_COMPILER_PROXY_PORT', '8088'))
     ns = PopenWithCheck(['netstat', '-a', '-n', '-o'],
                         stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT).communicate()[0]
+                        stderr=subprocess.STDOUT,
+                        encoding='oem').communicate()[0]
     listenline = re.compile('.*TCP.*(?:%s).*LISTENING *([0-9]*).*' %
                             '|'.join(ports))
     for line in ns.splitlines():
