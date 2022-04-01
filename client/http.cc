@@ -23,8 +23,8 @@
 
 #include "absl/memory/memory.h"
 #include "absl/strings/escaping.h"
-#include "absl/strings/numbers.h"
 #include "absl/strings/match.h"
+#include "absl/strings/numbers.h"
 #include "absl/strings/str_cat.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/strip.h"
@@ -216,8 +216,15 @@ std::string HttpClient::Options::Host() const {
 std::string HttpClient::Options::DebugString() const {
   std::ostringstream ss;
   ss << "dest=" << dest_host_name << ":" << dest_port;
-  if (!url_path_prefix.empty())
-    ss << " url_path_prefix=" << url_path_prefix;
+  if (!url_path_prefix.empty()) {
+    std::string safe_url_path_prefix = url_path_prefix;
+    size_t pos = safe_url_path_prefix.find("access_token=");
+    if (pos != std::string::npos) {
+      safe_url_path_prefix =
+          safe_url_path_prefix.substr(0, pos) + "access_token=[redacted]";
+    }
+    ss << " url_path_prefix=" << safe_url_path_prefix;
+  }
   if (UseProxy())
     ss << " proxy=" << proxy_host_name << ":" << proxy_port;
   if (!extra_params.empty())

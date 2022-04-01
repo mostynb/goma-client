@@ -413,67 +413,6 @@ class GomaCtlSmallTest(GomaCtlTestCommon):
     self.assertEqual(len(parsed), 0)
     self.assertFalse('key' in parsed)
 
-  def testParseTaskList(self):
-    test = (
-        'Image name      PID  Session Name      Session#    Mem Usage\n'
-        '============== ==== ============= ============= ============\n'
-        'compiler.exe    123       Console             1     33,000 K\n'
-        'system.exe      456        System             2     10,000 K\n'
-        )
-    expected = [
-        {'Image name': 'compiler.exe',
-         'PID': '123',
-         'Session Name': 'Console',
-         'Session#': '1',
-         'Mem Usage': '33,000 K'},
-        {'Image name': 'system.exe',
-         'PID': '456',
-         'Session Name': 'System',
-         'Session#': '2',
-         'Mem Usage': '10,000 K'},
-        ]
-    parsed = self._module._ParseTaskList(test)
-    self.assertEqual(parsed, expected)
-
-  def testParseTaskListShouldRaiseErrorWithEmpty(self):
-    self.assertRaises(self._module.Error, self._module._ParseTaskList, '')
-
-  def testParseTaskListShouldRaiseErrorWithElmLenMismatch(self):
-    test = (
-        'Image name      PID  Session Name      Session#    Mem Usage\n'
-        '============== ==== ============= ============= ============\n'
-        'compiler.exe    123       Console\n'
-    )
-    self.assertRaises(self._module.Error, self._module._ParseTaskList, test)
-
-  def testParseTaskListShouldRaiseErrorWithNoSpaceBetweenValues(self):
-    test = (
-        'Image name      PID  Session Name      Session#    Mem Usage\n'
-        '============== ==== ============= ============= ============\n'
-        'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n'
-    )
-    self.assertRaises(self._module.Error, self._module._ParseTaskList, test)
-
-  def testParseTaskListShouldSkipBlankLines(self):
-    test = (
-        ' \n'
-        'Image name      PID  Session Name      Session#    Mem Usage\n'
-        '\r \n'
-        '============== ==== ============= ============= ============\n'
-        '\v\n'
-        'compiler.exe    123       Console             1     33,000 K\n'
-        '\t\n'
-      )
-    expected = [
-        {'Image name': 'compiler.exe',
-         'PID': '123',
-         'Session Name': 'Console',
-         'Session#': '1',
-         'Mem Usage': '33,000 K'},
-        ]
-    parsed = self._module._ParseTaskList(test)
-    self.assertEqual(parsed, expected)
-
   def testParseLsofShouldParse(self):
     test = ('u1\n'
             'p2\n'

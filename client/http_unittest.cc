@@ -134,6 +134,18 @@ TEST(HttpClientOptions, ProxyOptionsWitHTTPS) {
   EXPECT_EQ("/foo", options.RequestURL("foo"));
 }
 
+TEST(HttpClientOptions, DebugString) {
+  HttpClient::Options options;
+  EXPECT_TRUE(options.InitFromURL(
+      "https://oauth2.googleapis.com/tokeninfo?access_token=secret-data"));
+  EXPECT_EQ("oauth2.googleapis.com", options.dest_host_name);
+  EXPECT_EQ(443, options.dest_port);
+  EXPECT_EQ("/tokeninfo?access_token=secret-data", options.url_path_prefix);
+  LOG(INFO) << options.DebugString();
+  EXPECT_EQ(std::string::npos,
+            options.DebugString().find("/tokeninfo?access_token=secret-data"));
+}
+
 class HttpClientTest : public ::testing::Test {
  protected:
   class TestContext {
