@@ -11,6 +11,9 @@ See http://dev.chromium.org/developers/how-tos/depottools/presubmit-scripts
 for more details about the presubmit API built into git-cl.
 """
 
+USE_PYTHON3 = True
+
+
 def CheckChangeLintsClean(input_api, output_api):
   """Checks that all '.cc' and '.h' files pass cpplint.py.
 

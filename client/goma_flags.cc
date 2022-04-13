@@ -159,9 +159,9 @@ GOMA_DEFINE_int32(MAX_SLEEP_TIME, 60,
 
 #ifdef _WIN32
 // 60 seconds default timeout is mitigation for b/36493466, b/70640154,
-// b/179520543.
+// b/179520543, crbug.com/1316067
 GOMA_DEFINE_int32(NAMEDPIPE_WAIT_TIMEOUT_MS,
-                  60000,
+                  120000,
                   "Timeout(in milliseconds) to wait in ConnectNamedpipe.");
 
 GOMA_DEFINE_bool(GOMACC_ALLOW_GDI32DLL,
