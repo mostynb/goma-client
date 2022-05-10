@@ -96,7 +96,7 @@ class GzipInflateWriteCloser : public WriteCloser {
       return -1;
     }
     DCHECK_GT(len, 0);
-    zcontext_.next_in = static_cast<const Bytef*>(ptr);
+    zcontext_.next_in = static_cast<Bytef*>(const_cast<void*>(ptr));
     zcontext_.avail_in = len;
     do {
       zcontext_.next_out = reinterpret_cast<Bytef*>(&output_buffer_[0]);

@@ -108,9 +108,9 @@ guidelines](https://chromium.googlesource.com/chromium/src/+/main/styleguide/c++
 
 ## How to use
 
-### For Chromium/Android development
+### For Chromium development
 
-Goma can be integrated with Chromium/Android development easily.
+Goma can be integrated with Chromium development easily.
 
 1. Build goma client
 2. Start compiler\_proxy
@@ -136,20 +136,10 @@ $ ninja -j100 chrome
 ```
 
 More details are avairable in chromium's build instructions.
-* [docs/linux\_build\_instructions.md](https://chromium.googlesource.com/chromium/src/+/master/docs/linux_build_instructions.md)
-* [docs/windows\_build\_instructions.md](https://chromium.googlesource.com/chromium/src/+/master/docs/windows_build_instructions.md)
-* [docs/mac\_build\_instructions.md](https://chromium.googlesource.com/chromium/src/+/master/docs/mac_build_instructions.md)
-
-#### For Android
-
-```shell
-$ source build/envsetup.sh
-$ lunch aosp_arm-eng
-$ GOMA_DIR="${GOMA_SRC}/client/out/Release" USE_GOMA=true make -j4
-```
-
-Here, `-j4` is not related to Goma parallelism. Android internally sets
-`-j500` (or `-j` with `NINJA_REMOTE_NUM_JOBS` environment variable) for Goma.
+* [docs/linux/build\_instructions.md](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/linux/build_instructions.md)
+* [docs/windows\_build\_instructions.md](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/windows_build_instructions.md)
+* [docs/mac\_build\_instructions.md](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/mac_build_instructions.md)
+* [other build instructions](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/README.md#checking-out-and-building)
 
 ### For general development
 

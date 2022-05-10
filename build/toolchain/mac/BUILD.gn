@@ -162,7 +162,7 @@ template("mac_toolchain") {
       script = rebase_path(
               "//third_party/chromium_build/toolchain/apple/filter_libtool.py",
               root_build_dir)
-      command = "rm -f {{output}} && TOOL_VERSION=${tool_versions.filter_libtool} python $script libtool -static {{arflags}} -o {{output}} {{inputs}}"
+      command = "rm -f {{output}} && TOOL_VERSION=${tool_versions.filter_libtool} $python_path $script libtool -static {{arflags}} -o {{output}} {{inputs}}"
       description = "LIBTOOL-STATIC {{output}}"
       outputs = [ "{{output_dir}}/{{target_output_name}}{{output_extension}}" ]
       default_output_dir = "{{target_out_dir}}"

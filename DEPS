@@ -2,7 +2,7 @@
 
 vars = {
      "chromium_git": "https://chromium.googlesource.com",
-     "clang_revision": "4cc1d5fe48c190668e377c123c2066f3a9ea95ba",
+     "clang_revision": "3e15bc0c33d1b05433e5dd05b247dc9b971c6be8",
      "gn_version": "git_revision:dfcbc6fed0a8352696f92d67ccad54048ad182b3",
      "mingw_version": "version:2@11.2.0-6",
      "checkout_mingw": False,
@@ -26,7 +26,7 @@ deps = {
 
      # zlib
      "client/third_party/zlib":
-     "https://chromium.googlesource.com/chromium/src/third_party/zlib@1337da5314a9716c0653301cceeb835d17fd7ea4",
+     "https://chromium.googlesource.com/chromium/src/third_party/zlib@a6d209ab932df0f1c9d5b7dc67cfa74e8a3272c0",
 
      # xz v5.2.0
      "client/third_party/xz":
@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@27ffcc6e19bbafddf1b59ec0bc6df2904de7eb2c",
+     "https://boringssl.googlesource.com/boringssl@735a86834c375c0fc153e32127d7594a7573c924",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -107,7 +107,7 @@ deps = {
 
      # chromium's build.
      "client/third_party/chromium_build":
-     "https://chromium.googlesource.com/chromium/src/build/@cb0fa26dea8407bb1d78433f0a26d4bd02a79155",
+     "https://chromium.googlesource.com/chromium/src/build/@a1147fb865fb7ffbd72aca0ba48a4eedf62be5b0",
 
      'client/tools/clang/dsymutil': {
        'packages': [

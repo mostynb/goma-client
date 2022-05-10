@@ -8,12 +8,6 @@ if (os == "win") {
 import("//build/config/clang/clang.gni")
 import("//build/toolchain/toolchain.gni")
 
-declare_args() {
-  # We don't really care about warnings from the third party code, so don't
-  # treat them as errors by default.
-  treat_no_goma_code_warnings_as_errors = false
-}
-
 # default_include_dirs ---------------------------------------------------------
 #
 # This is a separate config so that third_party code (which would not use the
@@ -38,6 +32,11 @@ config("compiler") {
   configs = []
 
   configs += [ ":clang_revision" ]
+
+  if (is_clang) {
+    cflags += [ "-Werror" ]
+  }
+
   if (is_posix || is_win_gcc) {
     cflags_cc += [ "-std=c++14" ]
 
@@ -90,7 +89,7 @@ config("compiler") {
       ]
       ldflags += [ "-m64" ]
       if (os == "linux") {
-        sysroot = "//third_party/chromium_build/linux/debian_sid_amd64-sysroot"
+        sysroot = "//third_party/chromium_build/linux/debian_bullseye_amd64-sysroot"
       }
     } else if (current_cpu == "x86") {
       cflags += [ "-m32" ]
@@ -359,6 +358,12 @@ config("optimize_max") {
   configs = [ ":optimize" ]
 }
 
+config("optimize_speed") {
+  # This is for zlib
+  # XXX: use -O3?
+  configs = [ ":optimize" ]
+}
+
 config("default_optimization") {
   if (is_debug) {
     configs = [ ":no_optimize" ]
@@ -518,28 +523,28 @@ config("no_goma_code") {
     if (is_clang || is_win_gcc) {
       cflags += [
         "-Wno-deprecated-declarations",
+        "-Wno-deprecated-non-prototype",
         "-Wno-implicit-fallthrough",
         "-Wno-missing-field-initializers",
         "-Wno-shift-negative-value",
+        "-Wno-unused-but-set-variable",
         "-Wno-unused-const-variable",
         "-Wno-unused-function",
         "-Wno-unused-variable",
-        "-Wno-unused-but-set-variable",
       ]
 
-      cflags_cc = ["-Wno-reorder"]
+      cflags_cc = [ "-Wno-reorder" ]
     }
   }
 
-
-  if (is_clang && treat_no_goma_code_warnings_as_errors) {
-    cflags += [ "-Werror" ]
-  }
   if (is_clang) {
     cflags += [
       # TODO: Clean up and enable.
       # minizip contains misleading-indentation code
       "-Wno-misleading-indentation",
+
+      # ioapi.c in minizip violates this.
+      "-Wno-deprecated-non-prototype",
     ]
   }
 }

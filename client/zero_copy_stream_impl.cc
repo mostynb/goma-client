@@ -163,7 +163,7 @@ int GzipRequestInputStream::CopyingStream::Read(void* buffer, int size) {
     LOG_IF(INFO, raw_size == 0) << "Next returns size=0, retry";
   }
   int chunk_size = 0;
-  zcontext_.next_in = static_cast<const Bytef*>(raw_buffer);
+  zcontext_.next_in = static_cast<Bytef*>(const_cast<void*>(raw_buffer));
   zcontext_.avail_in = raw_size;
   zcontext_.next_out = static_cast<Bytef*>(buffer) + kChunkHeader.size();
   zcontext_.avail_out = size - kChunkHeader.size() - kChunkEnd.size();

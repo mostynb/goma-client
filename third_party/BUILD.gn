@@ -40,11 +40,12 @@ glog_defines = [ "HAVE_CONFIG_H" ]
 if (os != "win") {
   glog_cflags_cc = [ "-Wno-sign-compare" ]
 } else {
-
   if (is_win_gcc) {
-    glog_defines += [ "HAVE_PTHREAD",
-                      "HAVE_SNPRINTF",
-                      "HAVE_UNISTD_H" ]
+    glog_defines += [
+      "HAVE_PTHREAD",
+      "HAVE_SNPRINTF",
+      "HAVE_UNISTD_H",
+    ]
   } else {
     import("//third_party/chromium_build/config/win/visual_studio_version.gni")
 
@@ -78,6 +79,7 @@ if (os != "win") {
     "glog/src/windows/port.cc",
     "glog/src/windows/port.h",
   ]
+
   # Glog v0.5 removes the windows predefined configs besides
   # "port.h/.cc" above, so preemptively copied them to config/glog/win.
   # Since port.h/.cc remain, we still have to add this include_dir.
@@ -446,6 +448,12 @@ if (enable_lzma) {
 }
 
 # copied from zlib's BUILD.gn and modified for Goma.
+#  path fix: "." -> "//third_party/zlib", add "zlib/" prefix
+#  config: chromium_code -> goma_code
+#  drop use_arm_neon_optimizations
+#  drop is_ios, is_android
+#  no need to support is_win && !is_clang (on windows, clang-cl or mingw)
+#  no zlib_bench etc.
 # TODO: remove this if dependency issue has been fixed.
 
 # Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -453,48 +461,239 @@ if (enable_lzma) {
 # found in the LICENSE file.
 
 config("zlib_config") {
-  defines = [ "ZLIB_CONST" ]
   include_dirs = [
     "//third_party/zlib",
+
+    # added for goma. jar_parser needs minizip/unzip.h
     "//third_party/zlib/contrib",
   ]
 }
 
-static_library("zlib_x86_simd") {
-  if (!is_ios && (current_cpu == "x86" || current_cpu == "x64")) {
-    sources = [
-      "zlib/crc_folding.c",
+config("zlib_internal_config") {
+  defines = [ "ZLIB_IMPLEMENTATION" ]
 
-      # Added for `gn check`:
-      "zlib/deflate.h",
-      "zlib/fill_window_sse.c",
-      "zlib/zlib.h",
-      "zlib/zutil.h",
-    ]
-    if (!is_win || is_clang || is_win_gcc) {
-      cflags = [
-        "-msse4.2",
-        "-mpclmul",
-      ]
+  if (!is_debug) {
+    # Build code using -O3, see: crbug.com/1084371.
+    configs = [ "//build/config/compiler:optimize_speed" ]
+  }
+  if (is_debug || use_libfuzzer) {
+    # Enable zlib's asserts in debug and fuzzer builds.
+    defines += [ "ZLIB_DEBUG" ]
+  }
+}
+
+source_set("zlib_common_headers") {
+  sources = [
+    "zlib/chromeconf.h",
+    "zlib/deflate.h",
+    "zlib/inffast.h",
+    "zlib/inffixed.h",
+    "zlib/inflate.h",
+    "zlib/inftrees.h",
+    "zlib/zconf.h",
+    "zlib/zlib.h",
+    "zlib/zutil.h",
+  ]
+}
+
+use_arm_neon_optimizations = false
+
+# TODO: introduce build/config/arm.gni and enable arm_use_neon?
+
+use_x86_x64_optimizations = current_cpu == "x86" || current_cpu == "x64"
+
+config("zlib_adler32_simd_config") {
+  if (use_x86_x64_optimizations) {
+    defines = [ "ADLER32_SIMD_SSSE3" ]
+    if (is_win) {
+      defines += [ "X86_WINDOWS" ]
+    } else {
+      defines += [ "X86_NOT_WINDOWS" ]
     }
-  } else {
-    sources = [
-      "zlib/simd_stub.c",
+  }
 
-      # Added for `gn check`:
-      "zlib/deflate.h",
-      "zlib/x86.h",
-      "zlib/zlib.h",
-      "zlib/zutil.h",
+  if (use_arm_neon_optimizations) {
+    defines = [ "ADLER32_SIMD_NEON" ]
+  }
+}
+
+source_set("zlib_adler32_simd") {
+  visibility = [ ":*" ]
+
+  if (use_x86_x64_optimizations) {
+    sources = [
+      "zlib/adler32_simd.c",
+      "zlib/adler32_simd.h",
+    ]
+
+    cflags = [ "-mssse3" ]
+  }
+
+  if (use_arm_neon_optimizations) {
+    sources = [
+      "zlib/adler32_simd.c",
+      "zlib/adler32_simd.h",
     ]
   }
 
+  configs += [ ":zlib_internal_config" ]
+
+  public_configs = [ ":zlib_adler32_simd_config" ]
+
+  public_deps = [ ":zlib_common_headers" ]
+}
+
+if (use_arm_neon_optimizations) {
+  config("zlib_arm_crc32_config") {
+    # Disabled for iPhone, as described in DDI0487C_a_armv8_arm:
+    #  "All implementations of the ARMv8.1 architecture are required to
+    #   implement the CRC32* instructions. These are optional in ARMv8.0."
+    if (!is_ios) {
+      defines = [ "CRC32_ARMV8_CRC32" ]
+      if (is_android) {
+        defines += [ "ARMV8_OS_ANDROID" ]
+      } else if (is_linux || is_chromeos) {
+        defines += [ "ARMV8_OS_LINUX" ]
+      } else if (is_mac) {
+        defines += [ "ARMV8_OS_MACOS" ]
+      } else if (is_fuchsia) {
+        defines += [ "ARMV8_OS_FUCHSIA" ]
+      } else if (is_win) {
+        defines += [ "ARMV8_OS_WINDOWS" ]
+      } else {
+        assert(false, "Unsupported ARM OS")
+      }
+    }
+  }
+
+  source_set("zlib_arm_crc32") {
+    visibility = [ ":*" ]
+
+    include_dirs = [ "//third_party/zlib" ]
+
+    if (!is_win && !is_clang) {
+      assert(!use_thin_lto,
+             "ThinLTO fails mixing different module-level targets")
+      cflags_c = [ "-march=armv8-a+crc" ]
+    }
+
+    sources = [
+      "zlib/crc32_simd.c",
+      "zlib/crc32_simd.h",
+    ]
+
+    configs += [ ":zlib_internal_config" ]
+
+    public_configs = [ ":zlib_arm_crc32_config" ]
+
+    public_deps = [ ":zlib_common_headers" ]
+  }
+}
+
+config("zlib_inflate_chunk_simd_config") {
+  if (use_x86_x64_optimizations) {
+    defines = [ "INFLATE_CHUNK_SIMD_SSE2" ]
+
+    if (current_cpu == "x64") {
+      defines += [ "INFLATE_CHUNK_READ_64LE" ]
+    }
+  }
+
+  if (use_arm_neon_optimizations) {
+    defines = [ "INFLATE_CHUNK_SIMD_NEON" ]
+
+    if (current_cpu == "arm64") {
+      defines += [ "INFLATE_CHUNK_READ_64LE" ]
+    }
+  }
+}
+
+source_set("zlib_inflate_chunk_simd") {
+  visibility = [ ":*" ]
+
+  if (use_x86_x64_optimizations || use_arm_neon_optimizations) {
+    include_dirs = [ "//third_party/zlib" ]
+
+    sources = [
+      "zlib/contrib/optimizations/chunkcopy.h",
+      "zlib/contrib/optimizations/inffast_chunk.c",
+      "zlib/contrib/optimizations/inffast_chunk.h",
+      "zlib/contrib/optimizations/inflate.c",
+    ]
+  }
+
+  configs += [ ":zlib_internal_config" ]
+
+  # Needed for MSVC, which is still supported by V8 and PDFium. zlib uses K&R C
+  # style function declarations, which triggers warning C4131.
   configs -= [ "//build/config/compiler:goma_code" ]
   configs += [ "//build/config/compiler:no_goma_code" ]
+
+  public_configs = [ ":zlib_inflate_chunk_simd_config" ]
+
+  public_deps = [ ":zlib_common_headers" ]
+}
+
+config("zlib_crc32_simd_config") {
+  if (use_x86_x64_optimizations) {
+    defines = [ "CRC32_SIMD_SSE42_PCLMUL" ]
+  }
+}
+
+source_set("zlib_crc32_simd") {
+  visibility = [ ":*" ]
+
+  if (use_x86_x64_optimizations) {
+    sources = [
+      "zlib/crc32_simd.c",
+      "zlib/crc32_simd.h",
+    ]
+
+    cflags = [
+      "-msse4.2",
+      "-mpclmul",
+    ]
+  }
+
+  configs += [ ":zlib_internal_config" ]
+
+  public_configs = [ ":zlib_crc32_simd_config" ]
+  public_deps = [ ":zlib_common_headers" ]
+}
+
+config("zlib_x86_simd_config") {
+  if (use_x86_x64_optimizations) {
+    defines = [
+      "CRC32_SIMD_SSE42_PCLMUL",
+      "DEFLATE_FILL_WINDOW_SSE2",
+    ]
+  }
+}
+
+source_set("zlib_x86_simd") {
+  visibility = [ ":*" ]
+
+  if (use_x86_x64_optimizations) {
+    sources = [
+      "zlib/crc_folding.c",
+      "zlib/fill_window_sse.c",
+    ]
+
+    cflags = [
+      "-msse4.2",
+      "-mpclmul",
+    ]
+  }
+
+  configs += [ ":zlib_internal_config" ]
+
+  public_configs = [ ":zlib_x86_simd_config" ]
+
+  public_deps = [ ":zlib_common_headers" ]
 }
 
 config("zlib_warnings") {
-  if (is_clang && !is_ios && (current_cpu == "x86" || current_cpu == "x64")) {
+  if (is_clang && use_x86_x64_optimizations) {
     cflags = [ "-Wno-incompatible-pointer-types" ]
   }
 }
@@ -507,7 +706,11 @@ static_library("zlib") {
 
   sources = [
     "zlib/adler32.c",
+    "zlib/chromeconf.h",
     "zlib/compress.c",
+    "zlib/contrib/optimizations/insert_string.h",
+    "zlib/cpu_features.c",
+    "zlib/cpu_features.h",
     "zlib/crc32.c",
     "zlib/crc32.h",
     "zlib/deflate.c",
@@ -521,39 +724,63 @@ static_library("zlib") {
     "zlib/inffast.c",
     "zlib/inffast.h",
     "zlib/inffixed.h",
-    "zlib/inflate.c",
     "zlib/inflate.h",
     "zlib/inftrees.c",
     "zlib/inftrees.h",
-    "zlib/names.h",
     "zlib/trees.c",
     "zlib/trees.h",
     "zlib/uncompr.c",
-    "zlib/x86.h",
     "zlib/zconf.h",
     "zlib/zlib.h",
     "zlib/zutil.c",
     "zlib/zutil.h",
   ]
 
-  if (!is_ios && (current_cpu == "x86" || current_cpu == "x64")) {
-    sources += [ "zlib/x86.c" ]
+  defines = []
+  deps = []
+
+  if (!use_x86_x64_optimizations && !use_arm_neon_optimizations) {
+    # Apparently android_cronet bot builds with NEON disabled and
+    # we also should disable optimizations for iOS@x86 (a.k.a. simulator).
+    defines += [ "CPU_NO_SIMD" ]
   }
 
+  if (use_x86_x64_optimizations || use_arm_neon_optimizations) {
+    deps += [
+      ":zlib_adler32_simd",
+      ":zlib_inflate_chunk_simd",
+    ]
+
+    if (use_x86_x64_optimizations) {
+      deps += [ ":zlib_crc32_simd" ]
+    } else if (use_arm_neon_optimizations) {
+      sources += [ "contrib/optimizations/slide_hash_neon.h" ]
+      deps += [ ":zlib_arm_crc32" ]
+    }
+  } else {
+    sources += [ "zlib/inflate.c" ]
+  }
+
+  deps += [ ":zlib_x86_simd" ]
+
   configs -= [ "//build/config/compiler:goma_code" ]
+  configs += [ "//build/config/compiler:no_goma_code" ]
+
+  public_configs = [ ":zlib_config" ]
+
   configs += [
-    "//build/config/compiler:no_goma_code",
+    ":zlib_internal_config",
 
     # Must be after no_chromium_code for warning flags to be ordered correctly.
     ":zlib_warnings",
   ]
 
-  public_configs = [ ":zlib_config" ]
-  deps = [ ":zlib_x86_simd" ]
+  allow_circular_includes_from = deps
 }
 
 config("minizip_warnings") {
   visibility = [ ":*" ]
+
   if (is_clang) {
     # zlib uses `if ((a == b))` for some reason.
     cflags = [ "-Wno-parentheses-equality" ]
@@ -578,7 +805,8 @@ static_library("minizip") {
       "zlib/contrib/minizip/iowin32.h",
     ]
   }
-  if (is_mac || is_ios || is_android) {
+
+  if (is_apple) {
     # Mac, Android and the BSDs don't have fopen64, ftello64, or fseeko64. We
     # use fopen, ftell, and fseek instead on these systems.
     defines = [ "USE_FILE32API" ]
@@ -587,11 +815,12 @@ static_library("minizip") {
   deps = [ ":zlib" ]
 
   configs -= [ "//build/config/compiler:goma_code" ]
-  configs += [
-    "//build/config/compiler:no_goma_code",
+  configs += [ "//build/config/compiler:no_goma_code" ]
 
+  public_configs = [ ":zlib_config" ]
+
+  configs += [
     # Must be after no_chromium_code for warning flags to be ordered correctly.
     ":minizip_warnings",
   ]
-  public_configs = [ ":zlib_config" ]
 }
