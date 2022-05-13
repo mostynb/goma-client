@@ -53,6 +53,7 @@ _CACHE_DIR = 'goma_cache'
 _PRODUCT_NAME = 'Goma'  # product name used for crash report.
 _DUMP_FILE_SUFFIX = '.dmp'
 _CHECKSUM_FILE = 'sha256.json'
+_PORT_UNAVAILABLE = object()
 
 _TIMESTAMP_PATTERN = re.compile('(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})')
 _TIMESTAMP_FORMAT = '%Y/%m/%d %H:%M:%S'
@@ -763,6 +764,8 @@ class GomaDriver:
     """
     if not self._env.CompilerProxyRunning():
       return True
+    if self._env.IsCompilerProxyPortUnavailable():
+      return False
     print('Wait for compiler_proxy process to terminate...')
     for cnt in range(wait_seconds):
       if not self._env.CompilerProxyRunning():
@@ -1326,6 +1329,10 @@ class GomaEnv:
       raise ConfigError('gomacc(%s) not exist' % self._gomacc_binary)
     self._CheckPlatformConfig()
 
+  def IsCompilerProxyPortUnavailable(self):
+    """Returns compiler_proxy port unavailability state."""
+    return self._gomacc_port == _PORT_UNAVAILABLE
+
   def _GetCompilerProxyPort(self, proc=None):
     """Gets compiler_proxy's port by "gomacc port".
 
@@ -1338,29 +1345,38 @@ class GomaEnv:
     Raises:
       Error: if it cannot get compiler proxy port.
     """
+    if self.IsCompilerProxyPortUnavailable():
+      raise Error('compiler_proxy port unavailable')
+
     if self._gomacc_port:
       return self._gomacc_port
 
     port_error = ''
     stderr = ''
 
-    ping_start_time = time.time()
-    ping_timeout_sec = int(os.environ.get('GOMA_PING_TIMEOUT_SEC', '0')) + 20
-    ping_deadline = ping_start_time + ping_timeout_sec
-    ping_print_time = ping_start_time
+    # output glog output to stderr but ignore it because it is usually about
+    # failure of connecting IPC port.
+    env = os.environ.copy()
+    env['GLOG_logtostderr'] = 'true'
+
+    port_start_time = time.time()
+    port_timeout_sec = int(os.environ.get('GOMACTL_PORT_TIMEOUT_SEC', '10'))
+    port_deadline = port_start_time + port_timeout_sec
+    if proc:
+      # Wait for GOMA_PING_TIMEOUT_SEC if compiler_proxy was launched just now.
+      ping_timeout_sec = int(os.environ.get('GOMA_PING_TIMEOUT_SEC', '0'))
+      port_deadline += ping_timeout_sec
+    port_print_time = port_start_time
     while True:
       current_time = time.time()
-      if current_time > ping_deadline:
+      if current_time > port_deadline:
         break
 
-      if current_time - ping_print_time > 1:
-        print('waiting for compiler_proxy to respond...')
-        ping_print_time = current_time
+      if current_time - port_print_time > 1:
+        print('waiting for compiler_proxy port (timeout in %d)...' %
+              int(round(port_deadline - current_time)))
+        port_print_time = current_time
 
-      # output glog output to stderr but ignore it because it is usually about
-      # failure of connecting IPC port.
-      env = os.environ.copy()
-      env['GLOG_logtostderr'] = 'true'
       with tempfile.TemporaryFile() as tf:
         # "gomacc port" command may fail until compiler_proxy gets ready.
         # We know gomacc port only output port number to stdout, whose size
@@ -1373,7 +1389,7 @@ class GomaEnv:
         if portcmd.poll() is None:
           # port takes long time
           portcmd.kill()
-          port_error = 'port timedout'
+          port_error = 'compiler_proxy port request has timed out'
           tf.seek(0)
           stderr = tf.read()
           continue
@@ -1399,6 +1415,10 @@ class GomaEnv:
       if proc.returncode is not None:
         e = Error('compiler_proxy is not running %d' % proc.returncode)
       proc.kill()
+    else:
+      # A running compiler_proxy is not responding, don't try to interact with
+      # it in upcoming _GetCompilerProxyPort() calls.
+      self._gomacc_port = _PORT_UNAVAILABLE
     raise e
 
   def ControlCompilerProxy(self, command, check_running=True, need_pids=False):
