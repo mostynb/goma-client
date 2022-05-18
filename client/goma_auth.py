@@ -27,6 +27,7 @@ GOOGLE_AUTH_URI = 'https://accounts.google.com/o/oauth2/auth'
 OAUTH_SCOPES = 'https://www.googleapis.com/auth/userinfo.email'
 OAUTH_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 TOKEN_INFO_ENDPOINT = 'https://oauth2.googleapis.com/tokeninfo'
+# TODO: drop oob flow support
 OOB_CALLBACK_URN = 'urn:ietf:wg:oauth:2.0:oob'
 
 DEFAULT_GOMA_SERVER_HOST = 'goma.chromium.org'
@@ -247,6 +248,8 @@ def GetAuthorizationCodeViaBrowser(config):
   Returns:
     authorization code.
   """
+  print('Launching chrome browser to get OAuth2 token')
+
   AuthorizationCodeHandler.state = _RandomString(OAUTH_STATE_LENGTH)
   httpd = HTTPServer(('', 0), AuthorizationCodeHandler)
   config['redirect_uri'] = 'http://localhost:%d' % httpd.server_port
@@ -257,10 +260,19 @@ def GetAuthorizationCodeViaBrowser(config):
       'state': AuthorizationCodeHandler.state,
       'response_type': 'code'})
   google_auth_url = '%s?%s' % (config['auth_uri'], body)
-  webbrowser.open(google_auth_url)
-  httpd.handle_request()
-  httpd.server_close()
-  return AuthorizationCodeHandler.code
+  try:
+    # expect to use chrome only
+    # webbrowser.open would use other browsers if chrome not found,
+    # but these browser may not work with Google server.
+    chrome = webbrowser.get('chrome')
+    chrome.open(google_auth_url)
+    httpd.handle_request()
+    httpd.server_close()
+    return AuthorizationCodeHandler.code
+  except webbrowser.Error as ex:
+    print('ERROR: chrome not found: %s' % ex)
+    print('Try `goma_auth login --no-browser.` instead')
+    sys.exit(1)
 
 
 def GetAuthorizationCodeViaCommandLine(config):
@@ -400,8 +412,12 @@ def Login():
   ConfirmUserAgreedToS()
 
   parser = argparse.ArgumentParser()
-  parser.add_argument('--browser', action='store_true',
-                      help=('Use browser to get goma OAuth2 token.'))
+  parser.add_argument(
+      '--no-browser',
+      dest='browser',
+      default=True,
+      action='store_false',
+      help='Do not use browser to get goma OAuth2 token.')
   options = parser.parse_args(sys.argv[2:])
 
   config = GomaOAuth2Config()
