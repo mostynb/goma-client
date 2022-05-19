@@ -121,6 +121,9 @@ class FakeGomaEnv:
   def CheckRBEDogfood(self):
     pass
 
+  def IsCompilerProxyPortUnavailable(self):
+    return False
+
   def ControlCompilerProxy(self, command, check_running=True, need_pids=False):
     if command == '/healthz':
       return {'status': True, 'message': 'ok', 'url': 'dummy_url',
