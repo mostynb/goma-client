@@ -260,11 +260,15 @@ def GetAuthorizationCodeViaBrowser(config):
       'state': AuthorizationCodeHandler.state,
       'response_type': 'code'})
   google_auth_url = '%s?%s' % (config['auth_uri'], body)
+  # expect to use chrome only
+  # webbrowser.open would use other browsers if chrome not found,
+  # but these browser may not work with Google server.
   try:
-    # expect to use chrome only
-    # webbrowser.open would use other browsers if chrome not found,
-    # but these browser may not work with Google server.
-    chrome = webbrowser.get('chrome')
+    chrome = None
+    try:
+      chrome = webbrowser.get('google-chrome')
+    except webbrowser.Error:
+      chrome = webbrowser.get('chrome')
     chrome.open(google_auth_url)
     httpd.handle_request()
     httpd.server_close()

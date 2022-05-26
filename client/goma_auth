@@ -3,4 +3,4 @@
 
 MYPATH=$(dirname "${BASH_SOURCE[0]}")
 
-PYTHONDONTWRITEBYTECODE=1 exec python "$MYPATH/goma_auth.py" "$@"
+PYTHONDONTWRITEBYTECODE=1 exec python3 "$MYPATH/goma_auth.py" "$@"
