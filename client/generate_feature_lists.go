@@ -294,8 +294,21 @@ func main() {
 	sort.Strings(cppAttrs)
 	sort.Strings(declSpecs)
 
-	builtinsDef := mustFetch(ctx, revision, "clang/include/clang/Basic/Builtins.def")
-	builtins := captures(mustParse(ctx, builtinsDef, `(?ms)^[A-Z_]*BUILTIN\((\w+),`), 1)
+	builtinsSeen := make(map[string]bool)
+	var builtins []string
+	// architecture specific builtins used in abseil b/234597703
+	// - add more arch?
+	// - enable arch specific builtins for specific target?
+	for _, arch := range []string{"", "AArch64", "ARM"} {
+		builtinsDef := mustFetch(ctx, revision, "clang/include/clang/Basic/Builtins"+arch+".def")
+		for _, b := range captures(mustParse(ctx, builtinsDef, `(?ms)^[A-Z_]*BUILTIN\((\w+),`), 1) {
+			if builtinsSeen[b] {
+				continue
+			}
+			builtinsSeen[b] = true
+			builtins = append(builtins, b)
+		}
+	}
 	// these builtins are not defined in *.def
 	// but Preprocessor::RegisterBuiltinMacros
 	// https://github.com/llvm/llvm-project/blob/d245f2e8597bfb52c34810a328d42b990e4af1a4/clang/lib/Lex/PPMacroExpansion.cpp#L383
