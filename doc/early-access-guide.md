@@ -95,6 +95,18 @@ Then, run `goma_ctl update_hook` to download and restart `compiler_proxy`.
 $ goma_ctl update_hook
 ```
 
+## How to temporarily disable GOMA
+
+If you want to temporarily disable GOMA to run your compilation 100% locally
+(e.g. because you are offline), you may use the following environment variable:
+
+```
+GOMA_DISABLED=true
+```
+
+Do **not** change `use_goma` in your gn args, otherwise you would trigger a full
+rebuild.
+
 # Known issues
 
 ## `compiler_proxy` takes CPU after builds
