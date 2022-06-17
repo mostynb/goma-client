@@ -87,6 +87,9 @@ def main():
   for d in sorted(os.listdir(args.third_party_dir)):
     if not os.path.isdir(os.path.join(args.third_party_dir, d)):
       continue
+    if d.startswith("_gclient_"):
+      # skip gclient tmp dir
+      continue
     if d in PRUNE_DIRS:
       continue
     license_data = FindLicense(args.third_party_dir, d)
