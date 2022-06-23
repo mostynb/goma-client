@@ -265,18 +265,37 @@ def GetAuthorizationCodeViaBrowser(config):
   # but these browser may not work with Google server.
   try:
     chrome = None
+    print('Launching browser...')
     try:
       chrome = webbrowser.get('google-chrome')
     except webbrowser.Error:
       chrome = webbrowser.get('chrome')
     chrome.open(google_auth_url)
-    httpd.handle_request()
-    httpd.server_close()
-    return AuthorizationCodeHandler.code
   except webbrowser.Error as ex:
     print('ERROR: chrome not found: %s' % ex)
-    print('Try `goma_auth login --no-browser.` instead')
-    sys.exit(1)
+
+  print('If browser is not launched correctly,')
+  print('Setup ssh portforwarding `-L %d:localhost:%d`' %
+        (httpd.server_port, httpd.server_port))
+  print('from machine that browser is available,')
+  print('')
+  print('If you already login with ssh from such machine,')
+  print('1. enter `~C` to open ssh command line')
+  print('2. set the following command line to `ssh>` prompt')
+  print('-L %d:localhost:%d' % (httpd.server_port, httpd.server_port))
+  print('')
+  print('3. Browse the following URLs.')
+  print(google_auth_url)
+  print('')
+
+  httpd.handle_request()
+  httpd.server_close()
+  print('If you set up port forwarding, you can cancel it now')
+  print('1. enter `~C` to open ssh command line')
+  print('2. set the following command line to `ssh>` prompt')
+  print('-KL %d' % httpd.server_port)
+  print('')
+  return AuthorizationCodeHandler.code
 
 
 def GetAuthorizationCodeViaCommandLine(config):
