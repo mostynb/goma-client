@@ -269,7 +269,14 @@ def GetAuthorizationCodeViaBrowser(config):
     try:
       chrome = webbrowser.get('google-chrome')
     except webbrowser.Error:
-      chrome = webbrowser.get('chrome')
+      try:
+        chrome = webbrowser.get('chrome')
+      except webbrowser.Error as ex:
+        chrome_path = \
+          'c:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+        if not sys.platform == 'win32' or not os.path.exists(chrome_path):
+          raise ex
+        chrome = webbrowser.Chrome(chrome_path)
     chrome.open(google_auth_url)
   except webbrowser.Error as ex:
     print('ERROR: chrome not found: %s' % ex)
