@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@f2029899b2c1dcf3e3120876794da088f42ad351",
+     "https://boringssl.googlesource.com/boringssl@ebd8b8965c74ab06bb91f7a00b23822e1f1f26ca",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -107,7 +107,7 @@ deps = {
 
      # chromium's build.
      "client/third_party/chromium_build":
-     "https://chromium.googlesource.com/chromium/src/build/@a1147fb865fb7ffbd72aca0ba48a4eedf62be5b0",
+     "https://chromium.googlesource.com/chromium/src/build/@39eb47bf26d31b548638157fafe945f691db9ae8",
 
      'client/tools/clang/dsymutil': {
        'packages': [
@@ -125,7 +125,7 @@ deps = {
          'packages': [
              {
                  'package': 'infra/3pp/tools/go/${{platform}}',
-                 'version': 'version:2@1.18.3',
+                 'version': 'version:2@1.19',
              },
          ],
          'dep_type': 'cipd',

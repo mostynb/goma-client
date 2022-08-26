@@ -150,29 +150,32 @@ bool DepsCache::SetDependencies(const DepsCache::Identifier& identifier,
   DCHECK(identifier.has_value());
   DCHECK(file::IsAbsolutePath(cwd)) << cwd;
 
-  std::vector<DepsHashId> deps_hash_ids;
+  auto deps_size = dependencies.size();
+  if (dependencies.find(input_file) == dependencies.end()) {
+    ++deps_size;
+  }
 
-  // We set input_file as dependency also.
-  std::set<std::string> deps(dependencies);
-  deps.insert(input_file);
+  std::vector<DepsHashId> deps_hash_ids;
+  deps_hash_ids.reserve(deps_size);
 
   bool all_ok = true;
-  for (const auto& filename : deps) {
+
+  auto process_file = [&](const std::string& filename) {
     DCHECK(!filename.empty());
-    const std::string& abs_filename = file::JoinPathRespectAbsolute(
-        cwd, filename);
+    const std::string& abs_filename =
+        file::JoinPathRespectAbsolute(cwd, filename);
 
     FilenameIdTable::Id id = filename_id_table_.InsertFilename(filename);
     if (id == FilenameIdTable::kInvalidId) {
       all_ok = false;
-      break;
+      return;
     }
 
     FileStat file_stat(file_stat_cache->Get(abs_filename));
     if (!file_stat.IsValid()) {
       all_ok = false;
       LOG(WARNING) << "invalid file id: " << abs_filename;
-      break;
+      return;
     }
 
     absl::optional<SHA256HashValue> directive_hash =
@@ -180,11 +183,23 @@ bool DepsCache::SetDependencies(const DepsCache::Identifier& identifier,
     if (!directive_hash.has_value()) {
       all_ok = false;
       LOG(WARNING) << "invalid directive hash: " << abs_filename;
-      break;
+      return;
     }
 
     DCHECK(DepsHashId(id, file_stat, directive_hash.value()).IsValid());
     deps_hash_ids.push_back(DepsHashId(id, file_stat, directive_hash.value()));
+  };
+
+  for (const auto& filename : dependencies) {
+    process_file(filename);
+    if (!all_ok) {
+      break;
+    }
+  }
+
+  // We set input_file as dependency also.
+  if (all_ok && dependencies.find(input_file) == dependencies.end()) {
+    process_file(input_file);
   }
 
   AUTO_EXCLUSIVE_LOCK(lock, &mu_);
@@ -193,8 +208,10 @@ bool DepsCache::SetDependencies(const DepsCache::Identifier& identifier,
     return false;
   }
 
-  deps_table_[identifier.value()].last_used_time = absl::ToTimeT(absl::Now());
-  std::swap(deps_table_[identifier.value()].deps_hash_ids, deps_hash_ids);
+  auto& deps = deps_table_[identifier.value()];
+  deps.last_used_time = absl::ToTimeT(absl::Now());
+  deps.deps_hash_ids = std::move(deps_hash_ids);
+
   return true;
 }
 

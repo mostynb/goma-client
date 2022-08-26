@@ -54,11 +54,11 @@ class MultiHttpRPC::MultiJob {
     int req_size() const { return req_size_; }
     google::protobuf::Message* mutable_resp() { return resp_; }
 
-    void StartCall(Job* master_job) {
+    void StartCall(Job* main_job) {
       DCHECK(http_rpc_stat_ != nullptr);
       DCHECK(!http_rpc_stat_->finished);
-      if (master_job != nullptr) {
-        http_rpc_stat_->master_trace_id = master_job->http_rpc_stat()->trace_id;
+      if (main_job != nullptr) {
+        http_rpc_stat_->main_trace_id = main_job->http_rpc_stat()->trace_id;
       }
       http_rpc_stat_->pending_time = timer_.GetDuration();
     }
@@ -136,8 +136,7 @@ class MultiHttpRPC::MultiJob {
     // timeout_secs, etc.)
     http_rpc_stat_ = *jobs_[0]->http_rpc_stat();
     DCHECK(!http_rpc_stat_.finished);
-    LOG(INFO) << http_rpc_stat_.master_trace_id << " rpc multi:"
-              << TraceIdList();
+    LOG(INFO) << http_rpc_stat_.main_trace_id << " rpc multi:" << TraceIdList();
     multi_rpc_->http_rpc_->CallWithCallback(
         multi_rpc_->multi_path_, req(), mutable_resp(), mutable_status(),
         NewCallback(
@@ -188,8 +187,8 @@ class MultiHttpRPC::MultiJob {
   void Done() {
     VLOG(1) << "multi rpc " << multi_rpc_->multi_path_
             << " Done num_call=" << num_call();
-    LOG(INFO) << http_rpc_stat_.master_trace_id << " rpc multi done:"
-              << TraceIdList();
+    LOG(INFO) << http_rpc_stat_.main_trace_id
+              << " rpc multi done:" << TraceIdList();
     LOG_IF(INFO, !http_rpc_stat_.response_header.empty())
         << "MultiHttpRPC done: http response="
         << http_rpc_stat_.response_header;

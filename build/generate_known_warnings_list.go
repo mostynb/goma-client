@@ -17,7 +17,7 @@ import (
 
 const GnuDocumentUrl = "https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html"
 const ClangDocumentUrl = "https://clang.llvm.org/docs/DiagnosticsReference.html"
-const ClangRepositoryUrl = "https://raw.githubusercontent.com/llvm-project/llvm-project-20170507/master/clang/include/clang/Basic/DiagnosticGroups.td"
+const ClangRepositoryUrl = "https://raw.githubusercontent.com/llvm/llvm-project/main/clang/include/clang/Basic/DiagnosticGroups.td"
 
 // Already known warnings. These warnings will be merged.
 var knownWarnings = []string{

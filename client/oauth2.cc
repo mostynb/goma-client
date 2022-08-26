@@ -66,7 +66,7 @@ static const char kType[] = "type";
 // Google OAuth2 clients always have a secret, even if the client is an
 // installed application/utility such as this.
 // Please see following URL to understand why it is ok to do:
-// https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/master/auth.py
+// https://chromium.googlesource.com/chromium/tools/depot_tools.git/+/main/auth.py
 static const char kDefaultClientId[] =
     "687418631491-r6m1c3pr0lth5atp4ie07f03ae8omefc.apps.googleusercontent.com";
 static const char kDefaultSecret[] = "R7e-JO3L5sKVczuR-dKQrijF";

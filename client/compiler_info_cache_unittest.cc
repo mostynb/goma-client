@@ -451,7 +451,7 @@ TEST_F(CompilerInfoCacheTest, MissingCompilerCache) {
 TEST_F(CompilerInfoCacheTest, Marshal) {
   CompilerInfoCache::Key key;
   key.base = "/usr/bin/gcc -O2";
-  key.cwd = "/b/build/slave/work";
+  key.cwd = "/b/build/agent/work";
   key.local_compiler_path = "/usr/bin/gcc";
 
   std::unique_ptr<CompilerInfoData> cid(new CompilerInfoData);

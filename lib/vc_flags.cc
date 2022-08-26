@@ -738,12 +738,12 @@ void VCFlags::DefineFlags(FlagParser* parser) {
   parser->AddPrefixFlag("d2");
 
   // Brepro is undocument flag for reproducible build?
-  // https://github.com/llvm-project/llvm-project-20170507/blob/3e1fa78737e3b303558e6310c49d31c31827a2bf/clang/include/clang/Driver/CLCompatOptions.td#L55
+  // https://github.com/llvm/llvm-project/blob/90c78073f73eac58f4f8b4772a896dc8aac023bc/clang/include/clang/Driver/CLCompatOptions.td
   parser->AddBoolFlag("Brepro");
   parser->AddBoolFlag("Brepro-");
 
   // also see clang-cl
-  // https://github.com/llvm/llvm-project/blob/master/clang/include/clang/Driver/CLCompatOptions.td
+  // https://github.com/llvm/llvm-project/blob/90c78073f73eac58f4f8b4772a896dc8aac023bc/clang/include/clang/Driver/CLCompatOptions.td
   parser->AddFlag("o");  // set output file or directory
   parser->AddBoolFlag("fallback");
   parser->AddBoolFlag("G1");

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-// https://github.com/luci/luci-py/blob/master/client/LUCI_CONTEXT.md
+// https://github.com/luci/luci-py/blob/main/client/LUCI_CONTEXT.md
 
 #ifndef DEVTOOLS_GOMA_CLIENT_LUCI_CONTEXT_H_
 #define DEVTOOLS_GOMA_CLIENT_LUCI_CONTEXT_H_

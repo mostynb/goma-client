@@ -104,7 +104,7 @@ bool ParseLuciContext(
   }
 
   // TODO: implement swarming?
-  // https://github.com/luci/luci-py/blob/master/client/LUCI_CONTEXT.md
+  // https://github.com/luci/luci-py/blob/main/client/LUCI_CONTEXT.md
 
   return true;
 }

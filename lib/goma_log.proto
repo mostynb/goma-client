@@ -109,7 +109,7 @@ message ExecLog {
   repeated int32 rpc_resp_size = 15;
   repeated int32 rpc_raw_req_size = 16;
   repeated int32 rpc_raw_resp_size = 17;
-  repeated string rpc_master_trace_id = 58;
+  repeated string rpc_main_trace_id = 58;
   repeated int32 rpc_throttle_time = 67;
   repeated int32 rpc_pending_time = 57;
   repeated int32 rpc_req_build_time = 18;

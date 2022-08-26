@@ -12,88 +12,43 @@
 
 namespace devtools_goma {
 
-TEST(CrosUtil, ParseBlacklistContents) {
-  std::vector<std::string> expect;
+TEST(CrosUtil, IsDenied) {
+  std::vector<std::string> denylist;
+  denylist.push_back("/tmp");
+  EXPECT_TRUE(IsDenied("/tmp", denylist));
+  denylist.clear();
 
-  static const char* kEmpty = "";
-  EXPECT_EQ(expect, ParseBlacklistContents(kEmpty));
+  denylist.push_back("non-related");
+  denylist.push_back("/tmp");
+  EXPECT_TRUE(IsDenied("/tmp", denylist));
+  denylist.clear();
 
-  static const char* kCrLf = "\n\r ";
-  EXPECT_EQ(expect, ParseBlacklistContents(kCrLf));
+  denylist.push_back("/usr");
+  denylist.push_back("/tmp");
+  EXPECT_TRUE(IsDenied("/usr/local/etc", denylist));
+  denylist.clear();
 
-  static const char* kTmp = "/tmp";
-  expect.push_back("/tmp");
-  EXPECT_EQ(expect, ParseBlacklistContents(kTmp));
-  expect.clear();
+  denylist.push_back("non-related");
+  denylist.push_back("/local");
+  EXPECT_TRUE(IsDenied("/usr/local/etc", denylist));
+  denylist.clear();
 
-  static const char* kTmpWithWhiteSpaces = "\r\n /tmp\r\n ";
-  expect.push_back("/tmp");
-  EXPECT_EQ(expect, ParseBlacklistContents(kTmpWithWhiteSpaces));
-  expect.clear();
+  denylist.push_back("non-related");
+  denylist.push_back("/etc");
+  EXPECT_TRUE(IsDenied("/usr/local/etc", denylist));
+  denylist.clear();
 
-  static const char* kTwoDirs = "\n/example\n/example2\n";
-  expect.push_back("/example");
-  expect.push_back("/example2");
-  EXPECT_EQ(expect, ParseBlacklistContents(kTwoDirs));
-  expect.clear();
+  EXPECT_FALSE(IsDenied("/tmp", denylist));
+  denylist.clear();
 
-  static const char* kTwoDirsWithSpaces =
-      "\n/example \r\n \r\n \r\n /example2\n";
-  expect.push_back("/example");
-  expect.push_back("/example2");
-  EXPECT_EQ(expect, ParseBlacklistContents(kTwoDirsWithSpaces));
-  expect.clear();
+  denylist.push_back("non-related");
+  EXPECT_FALSE(IsDenied("/tmp", denylist));
+  denylist.clear();
 
-  static const char* kDirnameWithSpace = "\n/dirname with space \r\n";
-  expect.push_back("/dirname with space");
-  EXPECT_EQ(expect, ParseBlacklistContents(kDirnameWithSpace));
-  expect.clear();
-
-  static const char* kTwoDirnamesWithSpace =
-      "\n/dirname with  space \r\n /with space/part 2 \r\n";
-  expect.push_back("/dirname with  space");
-  expect.push_back("/with space/part 2");
-  EXPECT_EQ(expect, ParseBlacklistContents(kTwoDirnamesWithSpace));
-  expect.clear();
-}
-
-TEST(CrosUtil, IsBlacklisted) {
-  std::vector<std::string> blacklist;
-  blacklist.push_back("/tmp");
-  EXPECT_TRUE(IsBlacklisted("/tmp", blacklist));
-  blacklist.clear();
-
-  blacklist.push_back("non-related");
-  blacklist.push_back("/tmp");
-  EXPECT_TRUE(IsBlacklisted("/tmp", blacklist));
-  blacklist.clear();
-
-  blacklist.push_back("/usr");
-  blacklist.push_back("/tmp");
-  EXPECT_TRUE(IsBlacklisted("/usr/local/etc", blacklist));
-  blacklist.clear();
-
-  blacklist.push_back("non-related");
-  blacklist.push_back("/local");
-  EXPECT_TRUE(IsBlacklisted("/usr/local/etc", blacklist));
-  blacklist.clear();
-
-  blacklist.push_back("non-related");
-  blacklist.push_back("/etc");
-  EXPECT_TRUE(IsBlacklisted("/usr/local/etc", blacklist));
-  blacklist.clear();
-
-  EXPECT_FALSE(IsBlacklisted("/tmp", blacklist));
-  blacklist.clear();
-
-  blacklist.push_back("non-related");
-  EXPECT_FALSE(IsBlacklisted("/tmp", blacklist));
-  blacklist.clear();
-
-  blacklist.push_back("/opt");
-  blacklist.push_back("/tmp");
-  EXPECT_FALSE(IsBlacklisted("/usr/local/etc", blacklist));
-  blacklist.clear();
+  denylist.push_back("/opt");
+  denylist.push_back("/tmp");
+  EXPECT_FALSE(IsDenied("/usr/local/etc", denylist));
+  denylist.clear();
 }
 
 TEST(CrosUtil, GetLoadAverage) {

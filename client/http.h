@@ -203,7 +203,7 @@ class HttpClient {
     int num_oauth2_token_refreshed;
 
     std::string trace_id;
-    std::string master_trace_id;  // master request in multi http rpc.
+    std::string main_trace_id;  // main request in multi http rpc.
 
     std::string DebugString() const;
   };

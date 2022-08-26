@@ -70,7 +70,7 @@ message CompilerInfoData {
   // Implicit input files used for the compile.
   // We should upload following files in additon to header files etc.
   //
-  // For example, default blacklist files for clang sanitizer does not show up
+  // For example, default denylist files for clang sanitizer does not show up
   // in its command line.  However, lack of such files may make goma server
   // create broken object files.  It need to be set to ResourceInfo.
   message ResourceInfo {

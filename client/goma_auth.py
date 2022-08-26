@@ -584,10 +584,8 @@ Commands are:
   config shows compiler_proxy flags for login account
 
 Options are:
-  --browser use browser to get goma OAuth2 token (login command only)
-''' % {
-      'cmd': sys.argv[0]
-  })
+  --no-browser do not use browser to get goma OAuth2 token (login command only)
+''' % {'cmd': sys.argv[0]})
   return 0
 
 

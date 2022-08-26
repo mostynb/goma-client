@@ -978,7 +978,9 @@ int CompilerProxyHttpHandler::HandleAccountRequest(
   OAuth2Config config;
   service_.http_client()->GetOAuth2Config(&config);
   if (config.enabled()) {
-    static constexpr absl::string_view kLoginDoc = "https://chromium.googlesource.com/infra/goma/client/+/master/doc/early-access-guide.md#Login-to-Goma-service";
+    static constexpr absl::string_view kLoginDoc =
+        "https://chromium.googlesource.com/infra/goma/client/+/main/doc/"
+        "early-access-guide.md#Login-to-Goma-service";
     if (config.refresh_token.empty()) {
       ss << ", \"text\": \"need login\""
          << ", \"href\": \"" << kLoginDoc << "\"";

@@ -120,7 +120,7 @@ void JavacFlags::DefineFlags(FlagParser* parser) {
       {"XDignore.symbol.file", kBool},  // to use JRE internal classes
       {"XDskipDuplicateBridges=",
        kPrefix},  //  See
-                  //  https://android.googlesource.com/platform/build/soong.git/+/master/java/config/config.go#60
+                  //  https://android.googlesource.com/platform/build/soong.git/+/50dbe0a07408bc1b16b1c19720d464a98e618f23/java/config/config.go#112
       {"XDstringConcat=", kPrefix},  // Specifies how to concatenate strings
       {"Xdoclint:", kPrefix},        // -Xdoclint: lint for document.
       {"Xlint", kBool},              // -Xlint

@@ -258,7 +258,7 @@ void CheckGdi32Dll() {
            "and cause hangs. "
            "See "
            "https://chromium.googlesource.com/infra/goma/client/+/refs/heads/"
-           "master/doc/gomacc_gdi32.dll.md for more details.";
+           "main/doc/gomacc_gdi32.dll.md for more details.";
     LOG(WARNING) << "Warning: gdi32.dll found in the process. "
                     "This will harm performance and cause hangs.";
   }

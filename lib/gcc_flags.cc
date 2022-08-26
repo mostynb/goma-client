@@ -834,7 +834,7 @@ void GCCFlags::DefineFlags(FlagParser* parser) {
   opts->allows_nonspace_arg = true;
 
   // clang options can be taken from:
-  // https://github.com/llvm-mirror/clang/blob/master/include/clang/Driver/Options.td
+  // https://github.com/llvm/llvm-project/blob/main/clang/include/clang/Driver/Options.td
   // gcc options
   // https://gcc.gnu.org/onlinedocs/gcc-6.4.0/gcc/Option-Summary.html#Option-Summary
 

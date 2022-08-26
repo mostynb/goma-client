@@ -51,9 +51,9 @@ TEST(ClangCompilerInfoBuilderHelperTest, ParseResourceOutputPosixLegacy) {
       "-internal-externc-isystem /include -internal-externc-isystem "
       "/usr/include -ferror-limit 19 -fmessage-length 80 -fsanitize=address "
       "-fprofile-list=my_profilelist.txt "
-      "-fsanitize-blacklist=my_blacklist.txt "
+      "-fsanitize-blacklist=my_denylist.txt "
       "-fsanitize-system-blacklist=/third_party/llvm-build/Release+Asserts/lib/"
-      "clang/7.0.0/share/asan_blacklist.txt -fsanitize-address-use-after-scope "
+      "clang/7.0.0/share/asan_denylist.txt -fsanitize-address-use-after-scope "
       "-fno-assume-sane-operator-new -fobjc-runtime=gcc "
       "-fdiagnostics-show-option -fcolor-diagnostics -o /dev/null -x c "
       "/dev/null";
@@ -67,9 +67,9 @@ TEST(ClangCompilerInfoBuilderHelperTest, ParseResourceOutputPosixLegacy) {
   std::vector<ClangCompilerInfoBuilderHelper::ResourceList> expected = {
       {"gcc/x86_64-linux-gnu/4.6/crtbegin.o",
        CompilerInfoData::CLANG_GCC_INSTALLATION_MARKER},
-      {"my_blacklist.txt", CompilerInfoData::CLANG_RESOURCE},
+      {"my_denylist.txt", CompilerInfoData::CLANG_RESOURCE},
       {"/third_party/llvm-build/Release+Asserts/lib/clang"
-       "/7.0.0/share/asan_blacklist.txt",
+       "/7.0.0/share/asan_denylist.txt",
        CompilerInfoData::CLANG_RESOURCE},
       {"my_profilelist.txt", CompilerInfoData::CLANG_RESOURCE},
   };
@@ -278,7 +278,7 @@ TEST(ClangCompilerInfoBuilderHelperTest, GetResourceDirPosix) {
       "-internal-externc-isystem /include -internal-externc-isystem "
       "/usr/include -ferror-limit 19 -fmessage-length 80 -fsanitize=address "
       "-fsanitize-blacklist=/third_party/llvm-build/Release+Asserts/lib/clang"
-      "/7.0.0/share/asan_blacklist.txt -fsanitize-address-use-after-scope "
+      "/7.0.0/share/asan_denylist.txt -fsanitize-address-use-after-scope "
       "-fno-assume-sane-operator-new -fobjc-runtime=gcc "
       "-fdiagnostics-show-option -fcolor-diagnostics -o /dev/null -x c "
       "/dev/null";
@@ -366,7 +366,7 @@ TEST(ClangCompilerInfoBuilderHelperTest, GetResourceDirPosixClangCl) {
       "e -fdeprecated-macro -fdebug-compilation-dir ../.. -ferror-limit 1"
       "9 -fmessage-length 0 -fsanitize=address -fsanitize-blacklist=../.."
       "/third_party/llvm-build/Release+Asserts/lib/clang/7.0.0/share/asan"
-      "_blacklist.txt -fsanitize-address-use-after-scope -fsanitize-addre"
+      "_denylist.txt -fsanitize-address-use-after-scope -fsanitize-addre"
       "ss-globals-dead-stripping -fno-assume-sane-operator-new -fno-use-c"
       "xa-atexit -fms-extensions -fms-compatibility -fms-compatibility-ve"
       "rsion=19.11 -std=c++14 -fdelayed-template-parsing -fobjc-runtime=g"
@@ -493,7 +493,7 @@ TEST(ClangCompilerInfoBuilderHelperTest, ParseResourceOutputWin) {
       "Release+Asserts\\\\lib\\\\clang\\\\7.0.0\" "
       "\"-fsanitize=address\" \"-fsanitize-blacklist=c:\\\\third_party"
       "\\\\llvm-build\\\\Release+Asserts\\\\lib\\\\clang\\\\7.0.0"
-      "\\\\share\\\\asan_blacklist.txt\" \"-fsanitize-address-use-after-scope\""
+      "\\\\share\\\\asan_denylist.txt\" \"-fsanitize-address-use-after-scope\""
       "\"-fms-compatibility\" \"-fms-compatibility-version=19.11\"";
   std::vector<ClangCompilerInfoBuilderHelper::ResourceList> resource;
   EXPECT_EQ(ClangCompilerInfoBuilderHelper::ParseStatus::kSuccess,
@@ -503,7 +503,7 @@ TEST(ClangCompilerInfoBuilderHelperTest, ParseResourceOutputWin) {
                 ".", kDummyClangOutput, &resource));
   std::vector<ClangCompilerInfoBuilderHelper::ResourceList> expected = {
       {"c:\\\\third_party\\\\llvm-build\\\\Release+Asserts\\\\lib\\\\clang"
-       "\\\\7.0.0\\\\share\\\\asan_blacklist.txt",
+       "\\\\7.0.0\\\\share\\\\asan_denylist.txt",
        CompilerInfoData::CLANG_RESOURCE},
   };
   EXPECT_EQ(expected, resource);
@@ -555,7 +555,7 @@ TEST(ClangCompilerInfoBuilderHelperTest, GetResourceDirWinClangCl) {
       "Release+Asserts\\\\lib\\\\clang\\\\7.0.0\" "
       "\"-fsanitize=address\" \"-fsanitize-blacklist=c:\\\\third_party"
       "\\\\llvm-build\\\\Release+Asserts\\\\lib\\\\clang\\\\7.0.0"
-      "\\\\share\\\\asan_blacklist.txt\" \"-fsanitize-address-use-after-scope\""
+      "\\\\share\\\\asan_denylist.txt\" \"-fsanitize-address-use-after-scope\""
       "\"-fms-compatibility\" \"-fms-compatibility-version=19.11\"";
   CompilerInfoData compiler_info;
   EXPECT_TRUE(ClangCompilerInfoBuilderHelper::GetResourceDir(kDummyClangOutput,
@@ -583,7 +583,7 @@ TEST(ClangCompilerInfoBuilderHelperTest, GetResourceDirWinClangCl11) {
       "Release+Asserts\\\\lib\\\\clang\\\\11.0.0\" "
       "\"-fsanitize=address\" \"-fsanitize-blacklist=c:\\\\third_party"
       "\\\\llvm-build\\\\Release+Asserts\\\\lib\\\\clang\\\\11.0.0"
-      "\\\\share\\\\asan_blacklist.txt\" \"-fsanitize-address-use-after-scope\""
+      "\\\\share\\\\asan_denylist.txt\" \"-fsanitize-address-use-after-scope\""
       "\"-fms-compatibility\" \"-fms-compatibility-version=19.11\"";
   CompilerInfoData compiler_info;
   EXPECT_TRUE(ClangCompilerInfoBuilderHelper::GetResourceDir(kDummyClangOutput,

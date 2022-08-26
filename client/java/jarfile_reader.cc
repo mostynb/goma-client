@@ -80,7 +80,7 @@ JarFileReader::JarFileReader(const std::string& filename)
   // If ziptime has already been applied, we do not need to normalize.
   //
   // See also:
-  // https://android.googlesource.com/platform/build/+/master/tools/ziptime/ZipEntry.cpp
+  // https://android.googlesource.com/platform/build/+/aba99adea4cbc0ff0036e5523caebd3ff867daf7/tools/ziptime/ZipEntry.cpp
   // kZipTimeStaticDate come from ziptime code above, and it is 2008-01-01.
   // date format: (year - 1980) << 9 | month << 5 | day.
   static uint16_t kZipTimeStaticDate = (2008 - 1980) << 9 | 1 << 5 | 1;

@@ -15,7 +15,7 @@ import os
 import sys
 
 
-_DEFAULT_BLACKLIST = [
+_DENYLIST = [
     '/dev-libs/nss',  # make -j fails
     '/app-crypt/nss',  # make -j fails
     '/dev-libs/m17n-lib',  # make -j fails
@@ -25,50 +25,29 @@ _DEFAULT_BLACKLIST = [
     ]
 
 
-def ParseBlacklistContents(contents):
-  """Parses blacklist file contents and returns a blacklised directories.
+def GetDenylist():
+  """Returns list of portage package names to deny.
 
-  Args:
-    contents: contents in a blacklist file.
-
-  Returns:
-    a list of blacklisted directories.
-  """
-  blacklist = [x.strip() for x in contents.splitlines()]
-  return [x for x in blacklist if x]
-
-
-def GetBlacklist():
-  """Returns list of portage package names to blacklist.
-
-  If non-empty $GOMACC_BLACKLIST is set, we use its file contents in the file
-  specified by $GOMACC_BLACKLIST instead of the default one.
-  If $GOMACC_BLACKLIST is an empty string, we use _DEFAULT_BLACKLIST.
-  The blacklist contents should be list of directories like:
+  The contents should be list of directories like:
   /dev-libs/nss
   /sys-fs/mtools
 
-  Note that empty line is just ignored.
-
   Returns:
-    a list of blacklisted directories.
+    a list of denied directories.
   """
-  blacklist_file = os.getenv('GOMACC_BLACKLIST')
-  if not blacklist_file:
-    return _DEFAULT_BLACKLIST
-  return ParseBlacklistContents(open(blacklist_file).read())
+  return _DENYLIST
 
 
-def IsBlacklisted(path, blacklist):
-  """Determine whether a path belongs to some backlisted package.
+def IsDenied(path, denylist):
+  """Determine whether a path belongs to some denied package.
 
   Args:
     path: path of a portage package
 
   Returns:
-    True if the portage package has been blacklisted.
+    True if the portage package has been denied.
   """
-  for exemption_path in blacklist:
+  for exemption_path in denylist:
     if path.find(exemption_path) != -1:
       return True
   return False
@@ -77,7 +56,7 @@ def IsBlacklisted(path, blacklist):
 def RemoveGomaFromPath():
   """Remove the goma directory from the search path.
 
-  This will force a non-goma build, as needed for blacklisted packages.
+  This will force a non-goma build, as needed for denied packages.
   """
   if not os.environ.get('GOMA_DIR'):
     return
@@ -116,14 +95,14 @@ def RemoveParallelBuildArguments(args):
 def main():
   args = ['/usr/bin/make']
   args.extend(sys.argv[1:])
-  blacklist = GetBlacklist()
+  denylist = GetDenylist()
   # Regardless of with/without goma, make is limited to under certain
   # load average.
   args[1:1] = ['-l10']
   if os.getenv('MAKELEVEL'):
     # In a sub-make, do not modify the flags.
     pass
-  elif IsBlacklisted(os.getcwd(), blacklist) or os.getuid() == 0:
+  elif IsDenied(os.getcwd(), denylist) or os.getuid() == 0:
     # A root user cannot talk to goma.
     RemoveGomaFromPath()
     RemoveParallelBuildArguments(args)

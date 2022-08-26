@@ -15,23 +15,17 @@ namespace devtools_goma {
 
 #ifdef __linux__
 
-// Parses blacklist file contents and returns a list of blacklised directories.
-std::vector<std::string> ParseBlacklistContents(const std::string& contents);
-
-// Returns list of portage package names to blacklist.
-//  If non-empty $GOMACC_BLACKLIST is set, we use its file contents in the file
-//  specified by $GOMACC_BLACKLIST instead of the default one.
-//  If $GOMACC_BLACKLIST is an empty string, we use _DEFAULT_BLACKLIST.
-//  The blacklist contents should be list of directories like:
+// Returns list of portage package names to deny.
+//  The contents should be list of directories like:
 //  /dev-libs/nss
 //  /sys-fs/mtools
 //
 //  Note that empty line is just ignored.
-std::vector<std::string> GetBlacklist();
+std::vector<std::string> GetDenylist();
 
-// Returns true if |path| matches with one of path name in |blacklist|.
-bool IsBlacklisted(const std::string& path,
-                   const std::vector<std::string>& blacklist);
+// Returns true if |path| matches with one of path name in |denylist|.
+bool IsDenied(const std::string& path,
+              const std::vector<std::string>& denylist);
 
 // Returns load average in 1 min.  Returns negative value on error.
 float GetLoadAverage();
@@ -41,8 +35,8 @@ float GetLoadAverage();
 //       I think it enough for randomizing a sleep time.
 int64_t RandInt64(int64_t a, int64_t b);
 
-// Returns true if current working directory is not in the black list.
-// If in the black list, gomacc won't send the request to compiler_proxy.
+// Returns true if current working directory is not in the deny list.
+// If in the deny list, gomacc won't send the request to compiler_proxy.
 bool CanGomaccHandleCwd();
 
 // Waits the load average becomes less than |load|.

@@ -25,52 +25,32 @@
 #include "util.h"
 
 namespace {
-const char* const kDefaultBlacklist[] = {
-  "/dev-libs/nss",  // make -j fails
-  "/app-crypt/nss",  // make -j fails
-  "/dev-libs/m17n-lib",  // make -j fails
-  "/sys-fs/mtools",  // make -j fails
-  "/dev-java/icedtea",  // make -j fails
-  "/dev-libs/openssl",  // Makefile force -j1
+const char* const kDenylist[] = {
+    "/dev-libs/nss",       // make -j fails
+    "/app-crypt/nss",      // make -j fails
+    "/dev-libs/m17n-lib",  // make -j fails
+    "/sys-fs/mtools",      // make -j fails
+    "/dev-java/icedtea",   // make -j fails
+    "/dev-libs/openssl",   // Makefile force -j1
 };
 
 }  // namespace
 
 namespace devtools_goma {
 
-std::vector<std::string> ParseBlacklistContents(const std::string& contents) {
-  std::vector<std::string> parsed;
-  for (auto&& line : absl::StrSplit(contents,
-                                    absl::ByAnyChar("\r\n"),
-                                    absl::SkipEmpty())) {
-    absl::string_view stripped_line = absl::StripAsciiWhitespace(line);
-    if (!stripped_line.empty()) {
-      parsed.push_back(std::string(stripped_line));
-    }
+std::vector<std::string> GetDenylist() {
+  std::vector<std::string> denylist;
+  for (const auto& it : kDenylist) {
+    denylist.push_back(it);
   }
-  return parsed;
+  return denylist;
 }
 
-std::vector<std::string> GetBlacklist() {
-  const char* blacklist_file = getenv("GOMACC_BLACKLIST");
-  if (blacklist_file == nullptr) {
-    std::vector<std::string> default_blacklist;
-    for (const auto& it : kDefaultBlacklist) {
-      default_blacklist.push_back(it);
-    }
-    return default_blacklist;
-  }
-  std::string contents;
-  CHECK(ReadFileToString(blacklist_file, &contents))
-    << "Failed to read GOMACC_BLACKLIST=" << blacklist_file;
-  return ParseBlacklistContents(contents);
-}
-
-bool IsBlacklisted(const std::string& path,
-                   const std::vector<std::string>& blacklist) {
-  for (size_t i = 0; i < blacklist.size(); ++i) {
-    if (path.find(blacklist[i]) != std::string::npos) {
-      LOG(INFO) << "The path is blacklisted. "
+bool IsDenied(const std::string& path,
+              const std::vector<std::string>& denylist) {
+  for (size_t i = 0; i < denylist.size(); ++i) {
+    if (path.find(denylist[i]) != std::string::npos) {
+      LOG(INFO) << "The path is not allowed. "
                 << " path=" << path;
       return true;
     }
@@ -121,9 +101,9 @@ int64_t RandInt64(int64_t a, int64_t b) {
 }
 
 bool CanGomaccHandleCwd() {
-  const std::vector<std::string> blacklist = GetBlacklist();
+  const std::vector<std::string> denylist = GetDenylist();
   std::unique_ptr<char, decltype(&free)> cwd(getcwd(nullptr, 0), free);
-  if (IsBlacklisted(cwd.get(), blacklist) || getuid() == 0) {
+  if (IsDenied(cwd.get(), denylist) || getuid() == 0) {
     return false;
   }
   return true;

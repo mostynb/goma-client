@@ -168,7 +168,7 @@ GOMA_DEFINE_bool(GOMACC_ALLOW_GDI32DLL,
                  false,
                  "Allow gdi32.dll in gomacc.exe."
                  "https://chromium.googlesource.com/infra/goma/client/+/refs/"
-                 "heads/master/doc/gomacc_gdi32.dll.md");
+                 "heads/main/doc/gomacc_gdi32.dll.md");
 #endif
 
 GOMA_DEFINE_bool(GOMACC_ENABLE_CRASH_DUMP,

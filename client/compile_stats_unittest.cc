@@ -123,9 +123,9 @@ TEST(CompileStatsTest, GetMajorFactorInfoFileResponseTime) {
   EXPECT_EQ("file_download: 360 ms [36%]", stats.GetMajorFactorInfo());
 }
 
-TEST(CompileStatsTest, AddStatsFromHttpStatusMasterTraceIdOnly) {
+TEST(CompileStatsTest, AddStatsFromHttpStatusMainTraceIdOnly) {
   HttpClient::Status status;
-  status.master_trace_id = "master trace";
+  status.main_trace_id = "main trace";
   status.trace_id = "trace";
   status.req_size = 1;
   status.resp_size = 2;
@@ -135,8 +135,8 @@ TEST(CompileStatsTest, AddStatsFromHttpStatusMasterTraceIdOnly) {
   CompileStats stats;
   stats.AddStatsFromHttpStatus(status);
 
-  ASSERT_EQ(1, stats.exec_log.rpc_master_trace_id().size());
-  EXPECT_EQ("master trace", stats.exec_log.rpc_master_trace_id()[0]);
+  ASSERT_EQ(1, stats.exec_log.rpc_main_trace_id().size());
+  EXPECT_EQ("main trace", stats.exec_log.rpc_main_trace_id()[0]);
 
   // Make sure no size fields were added.
   EXPECT_EQ(stats.exec_log.rpc_req_size().size(), 0);
@@ -147,8 +147,8 @@ TEST(CompileStatsTest, AddStatsFromHttpStatusMasterTraceIdOnly) {
 
 TEST(CompileStatsTest, AddStatsFromHttpStatusMatchingTraceId) {
   HttpClient::Status status;
-  status.master_trace_id = "master trace";
-  status.trace_id = "master trace";
+  status.main_trace_id = "main trace";
+  status.trace_id = "main trace";
   status.req_size = 1;
   status.resp_size = 2;
   status.raw_req_size = 3;
@@ -157,8 +157,8 @@ TEST(CompileStatsTest, AddStatsFromHttpStatusMatchingTraceId) {
   CompileStats stats;
   stats.AddStatsFromHttpStatus(status);
 
-  ASSERT_EQ(1, stats.exec_log.rpc_master_trace_id().size());
-  EXPECT_EQ("master trace", stats.exec_log.rpc_master_trace_id()[0]);
+  ASSERT_EQ(1, stats.exec_log.rpc_main_trace_id().size());
+  EXPECT_EQ("main trace", stats.exec_log.rpc_main_trace_id()[0]);
 
   ASSERT_EQ(stats.exec_log.rpc_req_size().size(), 1);
   ASSERT_EQ(stats.exec_log.rpc_resp_size().size(), 1);
@@ -489,9 +489,9 @@ TEST(CompileStatsTest, DumpToJsonDetailedRpcExecStats) {
   stats.exec_log.add_rpc_resp_size(99000);
   stats.exec_log.add_rpc_resp_size(1000);
 
-  stats.exec_log.add_rpc_master_trace_id("hello");
-  stats.exec_log.add_rpc_master_trace_id("goodbye");
-  stats.exec_log.add_rpc_master_trace_id("thanks");
+  stats.exec_log.add_rpc_main_trace_id("hello");
+  stats.exec_log.add_rpc_main_trace_id("goodbye");
+  stats.exec_log.add_rpc_main_trace_id("thanks");
 
   Json::Value json;
   stats.DumpToJson(&json, CompileStats::DumpDetailLevel::kDetailed);
@@ -520,10 +520,11 @@ TEST(CompileStatsTest, DumpToJsonDetailedRpcExecStats) {
                                &error_message)) << error_message;
   EXPECT_EQ(266000, rpc_resp_size);
 
-  std::string exec_rpc_master;
-  EXPECT_TRUE(GetStringFromJson(json, "exec_rpc_master", &exec_rpc_master,
-                                &error_message)) << error_message;
-  EXPECT_EQ("hello goodbye thanks", exec_rpc_master);
+  std::string exec_rpc_main;
+  EXPECT_TRUE(
+      GetStringFromJson(json, "exec_rpc_main", &exec_rpc_main, &error_message))
+      << error_message;
+  EXPECT_EQ("hello goodbye thanks", exec_rpc_main);
 }
 
 TEST(CompileStatsTest, DumpToJsonDetailedDurations) {

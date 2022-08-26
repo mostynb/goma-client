@@ -188,10 +188,9 @@ std::string CompileStats::GetMajorFactorInfo() const {
 }
 
 void CompileStats::AddStatsFromHttpStatus(const HttpClient::Status& status) {
-  exec_log.add_rpc_master_trace_id(status.master_trace_id);
+  exec_log.add_rpc_main_trace_id(status.main_trace_id);
 
-  if (status.master_trace_id.empty() ||
-      status.master_trace_id == status.trace_id) {
+  if (status.main_trace_id.empty() || status.main_trace_id == status.trace_id) {
     exec_log.add_rpc_req_size(status.req_size);
     exec_log.add_rpc_resp_size(status.resp_size);
     exec_log.add_rpc_raw_req_size(status.raw_req_size);
@@ -323,7 +322,7 @@ void CompileStats::DumpToJson(Json::Value* json,
     StoreInt64ToJsonIfNotZero("exec_resp_size",
                               SumRepeatedInt32(exec_log.rpc_resp_size()), json);
     StoreStringToJsonIfNotEmpty(
-        "exec_rpc_master", absl::StrJoin(exec_log.rpc_master_trace_id(), " "),
+        "exec_rpc_main", absl::StrJoin(exec_log.rpc_main_trace_id(), " "),
         json);
 
     StoreDurationToJsonIfNotZero("exec_throttle_time",
