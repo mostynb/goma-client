@@ -64,6 +64,7 @@ static_library("common") {
   public_deps = [
     ":counterz_proto",
     "//base",
+    "//third_party:gtest_prod",
     "//third_party/jsoncpp",
   ]
   deps = [
@@ -207,6 +208,7 @@ config("include_target_gen_dir") {
 
 config("client_config") {
   include_dirs = [ "." ]
+
   # Used by client/mypath.cc
   if (is_win_gcc) {
     libs = [ "psapi" ]
@@ -713,9 +715,7 @@ static_library("proto_util") {
     "proto_util.cc",
     "proto_util.h",
   ]
-  configs += [
-    "//third_party/protobuf:protobuf_warnings",
-  ]
+  configs += [ "//third_party/protobuf:protobuf_warnings" ]
   public_deps = [
     "//third_party/abseil",
     "//third_party/protobuf:protobuf_lite",
@@ -764,6 +764,7 @@ static_library("deps_cache_lib") {
     ":common",
     ":compiler_proxy_base_lib",
     ":file_stat_cache_lib",
+    ":value_id_table",
     "//lib:goma_hash",
   ]
   deps = [
@@ -2040,6 +2041,25 @@ executable("rbe_stats_manager_unittest") {
   deps = [
     ":compiler_proxy_lib",
     ":goma_test_lib",
+    "//build/config:exe_and_shlib_deps",
+  ]
+}
+
+source_set("value_id_table") {
+  sources = [ "value_id_table.h" ]
+  public_deps = [
+    ":common",
+    "//third_party:glog",
+    "//third_party/abseil",
+  ]
+}
+
+executable("value_id_table_unittest") {
+  testonly = true
+  sources = [ "value_id_table_unittest.cc" ]
+  deps = [
+    ":goma_test_lib",
+    ":value_id_table",
     "//build/config:exe_and_shlib_deps",
   ]
 }

@@ -21,6 +21,7 @@
 #include "file_stat_cache.h"
 #include "filename_id_table.h"
 #include "goma_hash.h"
+#include "value_id_table.h"
 
 namespace devtools_goma {
 
@@ -100,22 +101,28 @@ class DepsCache {
  private:
   friend class DepsCacheTest;
 
+  using FileStatIDTable = ValueIDTable<FileStat>;
+  using DirectiveHashIDTable = ValueIDTable<SHA256HashValue>;
+
   // DepsHashId is used to check whether an include file is updated.
   // |directive_hash| is a hash value of the file's directive lines.
   struct DepsHashId {
     DepsHashId() {}
     DepsHashId(FilenameIdTable::Id id,
-               const FileStat& file_stat,
-               const SHA256HashValue& directive_hash)
-        : id(id), file_stat(file_stat), directive_hash(directive_hash) {}
+               const FileStatIDTable::Id file_stat_id,
+               const DirectiveHashIDTable::Id directive_hash_id)
+        : id(id),
+          file_stat_id(file_stat_id),
+          directive_hash_id(directive_hash_id) {}
 
-    bool IsValid() const {
-      return id != FilenameIdTable::kInvalidId && file_stat.IsValid();
+    bool IsValid(const FileStatIDTable& table) const {
+      return id != FilenameIdTable::kInvalidId &&
+             table.GetValue(file_stat_id).IsValid();
     }
 
     FilenameIdTable::Id id;
-    FileStat file_stat;
-    SHA256HashValue directive_hash;
+    FileStatIDTable::Id file_stat_id;
+    DirectiveHashIDTable::Id directive_hash_id;
   };
 
   struct DepsTableData {
@@ -181,6 +188,9 @@ class DepsCache {
   // performance and memory space. So, we manage this table to convert
   // between filename and id.
   FilenameIdTable filename_id_table_;
+
+  ValueIDTable<FileStat> file_stat_id_table_;
+  ValueIDTable<SHA256HashValue> directive_hash_id_table_;
 
   mutable Lock count_mu_;
   unsigned int hit_count_ GUARDED_BY(count_mu_);

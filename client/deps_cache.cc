@@ -133,7 +133,11 @@ void DepsCache::Clear() {
     AUTO_EXCLUSIVE_LOCK(lock, &mu_);
     deps_table_.clear();
   }
+
   filename_id_table_.Clear();
+  file_stat_id_table_.Clear();
+  directive_hash_id_table_.Clear();
+
   {
     AUTOLOCK(lock, &count_mu_);
     hit_count_ = 0;
@@ -186,8 +190,11 @@ bool DepsCache::SetDependencies(const DepsCache::Identifier& identifier,
       return;
     }
 
-    DCHECK(DepsHashId(id, file_stat, directive_hash.value()).IsValid());
-    deps_hash_ids.push_back(DepsHashId(id, file_stat, directive_hash.value()));
+    const DepsHashId deps_hash_id(
+        id, file_stat_id_table_.GetId(file_stat),
+        directive_hash_id_table_.GetId(directive_hash.value()));
+    DCHECK(deps_hash_id.IsValid(file_stat_id_table_));
+    deps_hash_ids.push_back(deps_hash_id);
   };
 
   for (const auto& filename : dependencies) {
@@ -246,9 +253,11 @@ bool DepsCache::GetDependencies(const DepsCache::Identifier& identifier,
       return false;
     }
 
-    if (IsDirectiveModified(file::JoinPathRespectAbsolute(cwd, filename),
-                            deps_hash_id.file_stat, deps_hash_id.directive_hash,
-                            file_stat_cache)) {
+    if (IsDirectiveModified(
+            file::JoinPathRespectAbsolute(cwd, filename),
+            file_stat_id_table_.GetValue(deps_hash_id.file_stat_id),
+            directive_hash_id_table_.GetValue(deps_hash_id.directive_hash_id),
+            file_stat_cache)) {
       IncrMissedByUpdatedCount();
       return false;
     }
@@ -491,7 +500,8 @@ bool DepsCache::LoadGomaDeps() {
           return false;
         }
         deps_table_data->deps_hash_ids.push_back(
-            DepsHashId(id, hashid.first, hash_value));
+            DepsHashId(id, file_stat_id_table_.GetId(hashid.first),
+                       directive_hash_id_table_.GetId(hash_value)));
       }
     }
   }
@@ -541,17 +551,19 @@ bool DepsCache::SaveGomaDeps() {
   }
 
   // We create a map:
-  //   FilenameIdTable::Id -> pair<FileStat, directive-hash>.
+  //   FilenameIdTable::Id -> pair<FileStat, directive-hash id>.
   // When we saw multiple DepsHashId for one FilenameIdTable::Id,
   // we choose the one whose mtime is the latest.
-  absl::flat_hash_map<FilenameIdTable::Id, std::pair<FileStat, SHA256HashValue>>
+  absl::flat_hash_map<FilenameIdTable::Id,
+                      std::pair<FileStat, DirectiveHashIDTable::Id>>
       m;
   for (const auto& deps_table_entry : deps_table_) {
     for (const auto& deps_hash_id : deps_table_entry.second.deps_hash_ids) {
       FilenameIdTable::Id id = deps_hash_id.id;
-      if (!m.contains(id) || m[id].first.mtime < deps_hash_id.file_stat.mtime) {
-        m[id] =
-            std::make_pair(deps_hash_id.file_stat, deps_hash_id.directive_hash);
+      const auto file_stat =
+          file_stat_id_table_.GetValue(deps_hash_id.file_stat_id);
+      if (!m.contains(id) || m[id].first.mtime < file_stat.mtime) {
+        m[id] = std::make_pair(file_stat, deps_hash_id.directive_hash_id);
       }
     }
   }
@@ -568,7 +580,7 @@ bool DepsCache::SaveGomaDeps() {
       // First, check all the deps_table_entry are valid.
       bool ok = true;
       for (const auto& deps_hash_id : deps_table_entry.second.deps_hash_ids) {
-        if (deps_hash_id.directive_hash != m[deps_hash_id.id].second) {
+        if (deps_hash_id.directive_hash_id != m[deps_hash_id.id].second) {
           ok = false;
           break;
         }
@@ -601,7 +613,8 @@ bool DepsCache::SaveGomaDeps() {
       }
 
       record->set_size(entry.second.first.size);
-      record->set_directive_hash(entry.second.second.ToHexString());
+      record->set_directive_hash(
+          directive_hash_id_table_.GetValue(entry.second.second).ToHexString());
     }
   }
 

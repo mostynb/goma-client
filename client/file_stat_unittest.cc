@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 #include <cstdio>
 
+#include "absl/hash/hash_testing.h"
 #include "absl/strings/string_view.h"
 #include "absl/time/clock.h"
 #include "file_helper.h"
@@ -162,6 +163,26 @@ TEST(FileStatTest, Symlink) {
   EXPECT_TRUE(symlink_stat.IsValid()) << symlink_stat;
   EXPECT_EQ(file_stat, symlink_stat);
   EXPECT_EQ(symlink_stat.size, data.size());
+}
+
+TEST(FileStatTest, Hash) {
+  FileStat stat1, stat2, stat3, stat4;
+  stat1.is_directory = true;
+  stat2.size = 1;
+  stat3.mtime = absl::FromTimeT(100);
+
+  stat4.is_directory = true;
+  stat4.taken_at = stat1.taken_at + absl::Seconds(1);
+
+  EXPECT_EQ(stat1, stat4);
+  EXPECT_NE(stat1.taken_at, stat4.taken_at);
+
+  EXPECT_TRUE(absl::VerifyTypeImplementsAbslHashCorrectly({
+      stat1,
+      stat2,
+      stat3,
+      stat4,
+  }));
 }
 
 }  // namespace devtools_goma

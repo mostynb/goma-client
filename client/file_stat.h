@@ -15,8 +15,10 @@
 #include <ostream>
 #include <string>
 
+#include "absl/hash/hash.h"
 #include "absl/time/time.h"
 #include "absl/types/optional.h"
+#include "gtest/gtest_prod.h"
 
 namespace devtools_goma {
 
@@ -64,6 +66,13 @@ struct FileStat {
   off_t size;
   bool is_directory;
 
+  template <typename H>
+  friend H AbslHashValue(H h, const FileStat& c) {
+    // This shouldn't include |taken_at| as that is only for staleness check of
+    // file stat.
+    return H::combine(std::move(h), c.mtime, c.size, c.is_directory);
+  }
+
  private:
 #ifndef _WIN32
   void InitFromStat(const struct stat& stat_buf);
@@ -72,6 +81,8 @@ struct FileStat {
   // This is member to detect stale file stat.
   // This should be earlier than actual time when timestat is taken.
   absl::Time taken_at;
+
+  FRIEND_TEST(FileStatTest, Hash);
 };
 
 }  // namespace devtools_goma

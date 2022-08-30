@@ -530,8 +530,8 @@ TEST_F(DepsCacheTest, RestartWithFileStatUpdate) {
     ASSERT_TRUE(GetDepsHashId(identifier1, acc, &deps_hash_id1));
     ASSERT_TRUE(GetDepsHashId(identifier2, acc, &deps_hash_id2));
 
-    ASSERT_EQ(deps_hash_id1.directive_hash, deps_hash_id2.directive_hash);
-    ASSERT_NE(deps_hash_id1.file_stat, deps_hash_id2.file_stat);
+    ASSERT_EQ(deps_hash_id1.directive_hash_id, deps_hash_id2.directive_hash_id);
+    ASSERT_NE(deps_hash_id1.file_stat_id, deps_hash_id2.file_stat_id);
   }
 
   // Restart DepsCache.
@@ -554,8 +554,8 @@ TEST_F(DepsCacheTest, RestartWithFileStatUpdate) {
     ASSERT_TRUE(GetDepsHashId(identifier1, acc, &deps_hash_id1));
     ASSERT_TRUE(GetDepsHashId(identifier2, acc, &deps_hash_id2));
 
-    EXPECT_EQ(deps_hash_id1.directive_hash, deps_hash_id2.directive_hash);
-    EXPECT_EQ(deps_hash_id1.file_stat, deps_hash_id2.file_stat);
+    EXPECT_EQ(deps_hash_id1.directive_hash_id, deps_hash_id2.directive_hash_id);
+    EXPECT_EQ(deps_hash_id1.file_stat_id, deps_hash_id2.file_stat_id);
   }
 }
 
@@ -618,8 +618,8 @@ TEST_F(DepsCacheTest, RestartWithDirectiveHashUpdate) {
     ASSERT_TRUE(GetDepsHashId(identifier1, acc, &deps_hash_id1));
     ASSERT_TRUE(GetDepsHashId(identifier2, acc, &deps_hash_id2));
 
-    ASSERT_NE(deps_hash_id1.directive_hash, deps_hash_id2.directive_hash);
-    ASSERT_NE(deps_hash_id1.file_stat, deps_hash_id2.file_stat);
+    ASSERT_NE(deps_hash_id1.directive_hash_id, deps_hash_id2.directive_hash_id);
+    ASSERT_NE(deps_hash_id1.file_stat_id, deps_hash_id2.file_stat_id);
   }
 
   // Restart DepsCache.
