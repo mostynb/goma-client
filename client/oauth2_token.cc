@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -27,6 +28,7 @@
 #include "jwt.h"
 #include "scoped_fd.h"
 #include "socket_factory.h"
+#include "util.h"
 
 namespace devtools_goma {
 
@@ -641,10 +643,18 @@ class GCEServiceAccountRefreshConfig : public OAuth2RefreshConfig {
     LOG(INFO) << "gce service account:"
               << http_options.gce_service_account;
     // https://cloud.google.com/compute/docs/authentication#applications
-    const char kMetadataURI[] =
-        "http://metadata/computeMetadata/v1/instance/service-accounts/";
+    // https://pkg.go.dev/cloud.google.com/go/compute/metadata#Client.Get
     std::ostringstream url;
-    url << kMetadataURI << http_options.gce_service_account << "/token";
+    url << "http://";
+    absl::optional<std::string> metadata_host = GetEnv("GCE_METADATA_HOST");
+    if (metadata_host) {
+      url << *metadata_host;
+    } else {
+      url << "metadata";
+    }
+    const char kMetadataPath[] =
+        "/computeMetadata/v1/instance/service-accounts/";
+    url << kMetadataPath << http_options.gce_service_account << "/token";
     options.InitFromURL(url.str());
     std::unique_ptr<HttpClient> client(new HttpClient(
         HttpClient::NewSocketFactoryFromOptions(options),
