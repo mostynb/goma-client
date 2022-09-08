@@ -507,6 +507,10 @@ bool LocalOutputCache::SaveOutput(const std::string& key,
   // --- Make cache_entry.
   LocalOutputCacheEntry cache_entry;
   const ExecResult& result = resp->result();
+  if (result.has_stdout_buffer())
+    cache_entry.set_stdout_buffer(result.stdout_buffer());
+  if (result.has_stderr_buffer())
+    cache_entry.set_stderr_buffer(result.stderr_buffer());
   for (const auto& output : result.output()) {
     std::string src_path =
         file::JoinPathRespectAbsolute(req->cwd(), output.filename());
@@ -615,6 +619,10 @@ bool LocalOutputCache::Lookup(const std::string& key,
   resp->set_cache_hit(ExecResp::LOCAL_OUTPUT_CACHE);
   ExecResult* result = resp->mutable_result();
   result->set_exit_status(0);
+  if (cache_entry.has_stdout_buffer())
+    result->set_stdout_buffer(cache_entry.stdout_buffer());
+  if (cache_entry.has_stderr_buffer())
+    result->set_stderr_buffer(cache_entry.stderr_buffer());
   for (auto&& file : cache_entry.files()) {
     ExecResult_Output* output = result->add_output();
     output->set_filename(file.filename());

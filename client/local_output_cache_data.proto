@@ -14,4 +14,6 @@ message LocalOutputCacheFile {
 
 message LocalOutputCacheEntry {
   repeated LocalOutputCacheFile files = 1;
+  optional bytes stdout_buffer = 2;
+  optional bytes stderr_buffer = 3;
 }
