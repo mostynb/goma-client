@@ -316,11 +316,12 @@ bool CompilerInfo::UpdateFileStatIfHashMatch() {
         return false;
       }
       symlink_path[size] = '\0';
-
-      if (r.symlink_path != absl::string_view(symlink_path.get(), size)) {
+      const auto symlink_path_view =
+          absl::string_view(symlink_path.get(), size);
+      if (r.symlink_path != symlink_path_view) {
         LOG(ERROR) << "CompilerInfo symlink resource doesn't match:"
                    << " name=" << r.name << " symlink_path: " << r.symlink_path
-                   << " vs " << symlink_path;
+                   << " vs " << symlink_path_view;
         return false;
       }
 
