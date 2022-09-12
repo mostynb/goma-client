@@ -83,6 +83,8 @@ class LocalOutputCacheTest : public ::testing::Test {
   ExecResp MakeFakeExecResp() {
     ExecResp resp;
     resp.mutable_result()->set_exit_status(0);
+    resp.mutable_result()->set_stdout_buffer("stdout");
+    resp.mutable_result()->set_stderr_buffer("stderr");
     ExecResult_Output* output = resp.mutable_result()->add_output();
     output->set_filename("output.o");
     return resp;
@@ -129,6 +131,8 @@ TEST_F(LocalOutputCacheTest, Match) {
                                                    trace_id));
 
   // 5. Check ExecResp content
+  EXPECT_EQ("stdout", looked_up_resp.result().stdout_buffer());
+  EXPECT_EQ("stderr", looked_up_resp.result().stderr_buffer());
   EXPECT_EQ(1, looked_up_resp.result().output_size());
   EXPECT_EQ("output.o",
             looked_up_resp.result().output(0).filename());
