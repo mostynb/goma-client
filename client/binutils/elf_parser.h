@@ -19,9 +19,13 @@ class ElfParser {
   ElfParser(const ElfParser&) = delete;
   ElfParser& operator=(const ElfParser&) = delete;
   virtual void UseProgramHeader(bool use_program_header) = 0;
+
   virtual bool ReadDynamicNeeded(std::vector<std::string>* needed) = 0;
   virtual bool ReadDynamicNeededAndRpath(std::vector<std::string>* needed,
                                          std::vector<std::string>* rpath) = 0;
+
+  // check if the elf has dynamic after ReadDynamicNeeded.
+  virtual bool HasDynamic() const = 0;
 
   static bool IsElf(const std::string& filename);
 

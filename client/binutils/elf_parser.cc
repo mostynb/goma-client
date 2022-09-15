@@ -65,7 +65,6 @@ class ElfParserImpl : public ElfParser {
   void UseProgramHeader(bool use_program_header) override {
     use_program_header_ = use_program_header;
   }
-
   bool ReadDynamicNeeded(std::vector<std::string>* needed) override {
     VLOG(1) << "ReadDynamicNeeded:" << filename_;
     if (!valid_) {
@@ -124,6 +123,8 @@ class ElfParserImpl : public ElfParser {
     return true;
   }
 
+  bool HasDynamic() const override { return !no_dynamic_; }
+
  private:
   void CheckIdent();
   bool ReadEhdr() {
@@ -178,6 +179,9 @@ class ElfParserImpl : public ElfParser {
       }
       phdrs_.push_back(std::move(phdr));
     }
+    if (dynamic_phdr_ == nullptr) {
+      no_dynamic_ = true;
+    }
     return valid_;
   }
   bool ReadShdrs() {
@@ -214,6 +218,9 @@ class ElfParserImpl : public ElfParser {
           break;
       }
       shdrs_.push_back(std::move(shdr));
+    }
+    if (dynamic_shdr_ == nullptr) {
+      no_dynamic_ = true;
     }
     if (strtab_shdr_ != nullptr)
       ReadStrtab();
@@ -372,6 +379,7 @@ class ElfParserImpl : public ElfParser {
   ScopedFd fd_;
   bool valid_;
   bool use_program_header_;
+  bool no_dynamic_ = false;
   Ehdr ehdr_;
   std::vector<std::unique_ptr<Phdr>> phdrs_;
   Phdr* dynamic_phdr_;

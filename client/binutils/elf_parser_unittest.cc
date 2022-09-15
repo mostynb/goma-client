@@ -118,7 +118,12 @@ TEST_F(ElfParserTest, UsrLib) {
     std::unique_ptr<ElfParser> parser(ElfParser::NewElfParser(fullname));
     ASSERT_TRUE(parser != nullptr) << fullname;
     parser->UseProgramHeader(true);
-    EXPECT_TRUE(parser->ReadDynamicNeeded(&p_needed)) << fullname;
+    if (!parser->ReadDynamicNeeded(&p_needed)) {
+      // skip test if it doesn't have dynamic. b/246834588
+      EXPECT_FALSE(parser->HasDynamic()) << fullname;
+      LOG(INFO) << "no DYNAMIC in " << fullname;
+      continue;
+    }
     elf_parser_p_time += timer.GetDuration();
 
     std::vector<std::string> s_needed;
