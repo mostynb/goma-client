@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@04989786e9ab16cef5261bbd05a2b1a8cb312dbf",
+     "https://boringssl.googlesource.com/boringssl@1ee71185a2322dc354bee5e5a0abfb1810a27dc6",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -125,7 +125,7 @@ deps = {
          'packages': [
              {
                  'package': 'infra/3pp/tools/go/${{platform}}',
-                 'version': 'version:2@1.19',
+                 'version': 'version:2@1.19.2',
              },
          ],
          'dep_type': 'cipd',
