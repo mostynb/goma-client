@@ -447,7 +447,7 @@ def Login():
       dest='browser',
       default=True,
       action='store_false',
-      help='Do not use browser to get goma OAuth2 token.')
+      help='Deprecated; no-op.')
   options = parser.parse_args(sys.argv[2:])
 
   config = GomaOAuth2Config()
@@ -455,6 +455,15 @@ def Login():
   func = GetAuthorizationCodeViaCommandLine
   if options.browser:
     func = GetAuthorizationCodeViaBrowser
+  else:
+    sys.stderr.write(
+        'ERROR: The "--no-browser" flag is deprecated.\n\n'
+        'It uses the deprecated out-of-band (OOB) auth flow, which stopped'
+        ' working on 2022-10-03.\n\n'
+        'If you need to "goma_auth login" over SSH, run without "--no-browser".'
+        ' The tool prints instructions how to authenticate.')
+    return 1
+
   config['refresh_token'] = GetRefreshToken(func, config)
 
   err = VerifyRefreshToken(config)
@@ -584,7 +593,7 @@ Commands are:
   config shows compiler_proxy flags for login account
 
 Options are:
-  --no-browser do not use browser to get goma OAuth2 token (login command only)
+  --no-browser deprecated, no-op
 ''' % {'cmd': sys.argv[0]})
   return 0
 
