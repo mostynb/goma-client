@@ -376,6 +376,10 @@ class ConfigError(Exception):
   """Raises when an error found in configurations."""
 
 
+class NotLoginError(Exception):
+  """Raises when user is not logged in yet."""
+
+
 class Error(Exception):
   """Raises when an error found in the system."""
 
@@ -947,6 +951,8 @@ class GomaDriver:
       try:
         self._env.WriteFile(
             os.path.join(tempdir, 'goma_auth_config'), self._env.AuthConfig())
+      except NotLoginError:
+        pass
       except ConfigError as ex:
         print('failed to get auth config %s' % ex)
 
@@ -1260,6 +1266,7 @@ class GomaEnv:
     Returns:
       output of `goma_auth.py config`.
     Raises:
+      NotLoginError if not logged in.
       ConfigError if `goma_auth.py config` failed.
     """
     for k in [
@@ -1282,7 +1289,7 @@ class GomaEnv:
       if ex.stderr:
         sys.stderr.write(ex.stderr + '\n')
       if ex.returncode == 1:
-        sys.exit(1)
+        raise NotLoginError('not logged in') from ex
       raise ConfigError('goma_auth.py config failed.') from ex
 
   def CheckAuthConfig(self):
@@ -1297,7 +1304,10 @@ class GomaEnv:
     """
     if _IsFlagTrue('GOMACTL_SKIP_AUTH'):
       return
-    out = self.AuthConfig()
+    try:
+      out = self.AuthConfig()
+    except NotLoginError:
+      sys.exit(1)
     for line in out.splitlines():
       if line.startswith('#'):
         print(line)

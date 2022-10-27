@@ -537,6 +537,19 @@ ScopedSocket SocketPool::ScopedSocketList::Poll(
     if (!socks_[i].valid())
       continue;
     if (FD_ISSET(socks_[i].get(), &fdset_)) {
+      struct sockaddr_storage storage;
+      memset(&storage, 0, sizeof storage);
+      socklen_t len = sizeof(storage);
+      int r = getpeername(socks_[i].get(),
+                          reinterpret_cast<struct sockaddr*>(&storage), &len);
+      if (r < 0) {
+        LOG(WARNING) << "getpeername failed"
+                     << " name=" << (*addrs_)[i].name
+                     << " sock=" << socks_[i].get()
+                     << " WSA:" << WSAGetLastError();
+        socks_[i].Close();
+        continue;
+      }
       *addr = &(*addrs_)[i];
       return std::move(socks_[i]);
     }
@@ -549,6 +562,7 @@ ScopedSocket SocketPool::ScopedSocketList::Poll(
                    << " name=" << (*addrs_)[i].name
                    << " sock=" << socks_[i].get()
                    << " WSA:" << WSAGetLastError();
+        socks_[i].Close();
         continue;
       }
       if (val_size != sizeof(val)) {
@@ -556,12 +570,14 @@ ScopedSocket SocketPool::ScopedSocketList::Poll(
                    << " name=" << (*addrs_)[i].name
                    << " sock=" << socks_[i].get()
                    << " val_size=" << val_size;
+        socks_[i].Close();
         continue;
       }
       LOG(ERROR) << "getsockopt(SO_ERROR)."
                  << " name=" << (*addrs_)[i].name
                  << " sock=" << socks_[i].get()
                  << " val=" << val;
+      socks_[i].Close();
     }
   }
 #else
@@ -588,12 +604,40 @@ ScopedSocket SocketPool::ScopedSocketList::Poll(
     return ScopedSocket();
   }
   for (int i = 0; i < *nfds; ++i) {
+    if (pfds_[i].revents & (POLLERR | POLLHUP | POLLNVAL)) {
+      int fd = pfds_[i].fd;
+      for (size_t j = 0; j < socks_.size(); ++j) {
+        if (!socks_[j].valid())
+          continue;
+        if (socks_[j].get() == fd) {
+          LOG(WARNING) << "connect error"
+                       << " name=" << (*addrs_)[j].name
+                       << " sock=" << socks_[j].get();
+          socks_[j].Close();
+          break;
+        }
+      }
+      continue;
+    }
     if (pfds_[i].revents & POLLOUT) {
       int fd = pfds_[i].fd;
       for (size_t j = 0; j < socks_.size(); ++j) {
         if (!socks_[j].valid())
           continue;
         if (socks_[j].get() == fd) {
+          struct sockaddr_storage storage;
+          memset(&storage, 0, sizeof storage);
+          socklen_t len = sizeof(storage);
+          int r =
+              getpeername(socks_[j].get(),
+                          reinterpret_cast<struct sockaddr*>(&storage), &len);
+          if (r < 0) {
+            PLOG(WARNING) << "getpeername failed"
+                          << " name=" << (*addrs_)[j].name
+                          << " sock=" << socks_[j].get();
+            socks_[j].Close();
+            break;
+          }
           *addr = &(*addrs_)[j];
           return std::move(socks_[j]);
         }

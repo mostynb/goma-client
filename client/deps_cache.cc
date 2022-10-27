@@ -114,7 +114,6 @@ void DepsCache::LoadIfEnabled() {
     // If deps cache is broken (or does not exist), clear all cache.
     LOG(INFO) << "couldn't load deps cache file. "
               << "The cache file is broken or too large";
-    instance_->Clear();
   }
 }
 
@@ -393,6 +392,8 @@ bool DepsCache::LoadGomaDeps() {
 
   if (!cache_file_.LoadWithMaxLimit(&goma_deps, total_bytes_limit)) {
     LOG(ERROR) << "failed to load cache file " << cache_file_.filename();
+    Clear();
+    SetLoaded();
     return false;
   }
 
@@ -404,6 +405,7 @@ bool DepsCache::LoadGomaDeps() {
               << "Current version should be " << kBuiltRevisionString
               << " but deps cache version is " << goma_deps.built_revision();
     Clear();
+    SetLoaded();
     return false;
   }
 
@@ -413,6 +415,7 @@ bool DepsCache::LoadGomaDeps() {
   absl::flat_hash_set<FilenameIdTable::Id> valid_ids;
   if (!filename_id_table_.LoadFrom(goma_deps.filename_id_table(), &valid_ids)) {
     Clear();
+    SetLoaded();
     return false;
   }
 
@@ -427,6 +430,7 @@ bool DepsCache::LoadGomaDeps() {
         LOG(ERROR) << "DepsIdTable contains unexpected filename_id: "
                    << record.filename_id();
         Clear();
+        SetLoaded();
         return false;
       }
 
@@ -434,6 +438,7 @@ bool DepsCache::LoadGomaDeps() {
         LOG(ERROR) << "DepsIdTable contains duplicated filename_id: "
                    << record.filename_id();
         Clear();
+        SetLoaded();
         return false;
       }
 
@@ -469,6 +474,7 @@ bool DepsCache::LoadGomaDeps() {
         LOG(ERROR) << "DependecyTable contains corrupted sha256 string: "
                    << record.identifier();
         Clear();
+        SetLoaded();
         return false;
       }
 
@@ -476,6 +482,7 @@ bool DepsCache::LoadGomaDeps() {
         LOG(ERROR) << "DependencyTable contains duplicated identifier: "
                    << record.identifier();
         Clear();
+        SetLoaded();
         return false;
       }
 
@@ -487,6 +494,7 @@ bool DepsCache::LoadGomaDeps() {
           LOG(ERROR) << "DependencyTable contains unexpected filename_id: "
                      << id;
           Clear();
+          SetLoaded();
           return false;
         }
 
@@ -497,6 +505,7 @@ bool DepsCache::LoadGomaDeps() {
           LOG(ERROR) << "DependencyTable contains corrupted sha256 string: "
                      << hashid.second;
           Clear();
+          SetLoaded();
           return false;
         }
         deps_table_data->deps_hash_ids.push_back(
@@ -504,6 +513,7 @@ bool DepsCache::LoadGomaDeps() {
                        directive_hash_id_table_.GetId(hash_value)));
       }
     }
+    SetLoaded();
   }
 
   LOG(INFO) << cache_file_.filename() << " has been successfully loaded.";

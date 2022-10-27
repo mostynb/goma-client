@@ -45,7 +45,12 @@ class DepsCache {
   using Identifier = absl::optional<SHA256HashValue>;
 
   static DepsCache* instance() { return instance_; }
-  static bool IsEnabled() { return instance_ != nullptr; }
+  static bool IsEnabled() {
+    if (instance_ == nullptr) {
+      return false;
+    }
+    return instance_->Loaded();
+  }
 
   // Initializes the DepsCache.
   // When |cache_filename| is empty, this won't be enabled.
@@ -168,6 +173,17 @@ class DepsCache {
                      const FilenameIdTable::Id& id,
                      DepsHashId* deps_hash_id) const;
 
+  // Checks if it completed loading cache file.
+  bool Loaded() {
+    AUTOLOCK(lock, &loaded_mu_);
+    return loaded_;
+  }
+
+  void SetLoaded() {
+    AUTOLOCK(lock, &loaded_mu_);
+    loaded_ = true;
+  }
+
   static DepsCache* instance_;
 
   const CacheFile cache_file_;
@@ -183,6 +199,9 @@ class DepsCache {
 
   mutable ReadWriteLock mu_;
   DepsTable deps_table_ GUARDED_BY(mu_);
+
+  mutable Lock loaded_mu_;
+  bool loaded_ GUARDED_BY(loaded_mu_);
 
   // Instead of using a filename, we alternatively use an id for
   // performance and memory space. So, we manage this table to convert
