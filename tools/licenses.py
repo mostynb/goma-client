@@ -18,6 +18,7 @@ PRUNE_DIRS = [
     'chromium_build',
     'config',
     'llvm-build',
+    'ninja',
 ]
 
 # These libraries don't have LICENSE in the directory.

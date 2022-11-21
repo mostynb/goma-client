@@ -111,6 +111,9 @@ TEST(CppTokenizerTest, ReadCharLiteral) {
 #pragma clang diagnostic pop
 #endif  // __clang__
 
+  EXPECT_TRUE(ReadCharLiteral("'\\u0301'", &token, kCHECK_END));
+  EXPECT_EQ(CppToken(CppToken::CHAR_LITERAL, u'\u0301'), token);
+
   EXPECT_FALSE(ReadCharLiteral("''", &token, !kCHECK_END));
 
   EXPECT_FALSE(ReadCharLiteral("'", &token, !kCHECK_END));

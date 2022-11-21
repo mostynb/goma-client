@@ -785,10 +785,22 @@ bool CppParser::ProcessHasIncludeInternal(const ArrayTokenList& tokens,
     Error("__has_include expects \"filename\" or <filename>");
     return false;
   }
-
-  ArrayTokenList tokenlist(tokens.begin(), tokens.end());
-  ArrayTokenList expanded =
-      CppMacroExpander(this).Expand(tokenlist, SpaceHandling::kKeep);
+  VLOG(1) << "has_include front=" << tokens.front()
+          << " type=" << tokens.front().type;
+  ArrayTokenList expanded;
+  // Simple <filepath> case.
+  if (tokens.front().type == Token::LT) {
+    VLOG(1) << "simple <filenpath> case";
+    expanded = tokens;
+  } else if (tokens.front().type == Token::STRING) {
+    VLOG(1) << "simple \"filenpath\" case";
+    expanded = tokens;
+  } else {
+    // TODO: need this? caller already expanded args? crbug.com/1386100
+    VLOG(1) << "expand has_include ";
+    ArrayTokenList tokenlist(tokens.begin(), tokens.end());
+    expanded = CppMacroExpander(this).Expand(tokenlist, SpaceHandling::kKeep);
+  }
   if (expanded.empty()) {
     Error("__has_include expects \"filename\" or <filename>");
     return false;

@@ -126,6 +126,9 @@ def CheckChangeOnUpload(input_api, output_api):
     if x.LocalPath().startswith(
         input_api.os_path.join('third_party', 'config')):
       return False
+    if x.LocalPath().startswith('third_party') and input_api.os_path.basename(
+        x.LocalPath()).startswith('README'):
+      return False
     return source_file_filter(x)
 
   def long_line_filter(x):

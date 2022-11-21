@@ -27,8 +27,6 @@ GOOGLE_AUTH_URI = 'https://accounts.google.com/o/oauth2/auth'
 OAUTH_SCOPES = 'https://www.googleapis.com/auth/userinfo.email'
 OAUTH_TOKEN_ENDPOINT = 'https://oauth2.googleapis.com/token'
 TOKEN_INFO_ENDPOINT = 'https://oauth2.googleapis.com/tokeninfo'
-# TODO: drop oob flow support
-OOB_CALLBACK_URN = 'urn:ietf:wg:oauth:2.0:oob'
 
 DEFAULT_GOMA_SERVER_HOST = 'goma.chromium.org'
 DEFAULT_GOMA_OAUTH2_CONFIG_FILE_NAME = '.goma_client_oauth2_config'
@@ -181,7 +179,6 @@ def DefaultOAuth2Config():
       'client_id': ('687418631491-r6m1c3pr0lth5atp4ie07f03ae8omefc.'
                     'apps.googleusercontent.com'),
       'client_secret': 'R7e-JO3L5sKVczuR-dKQrijF',
-      'redirect_uri': OOB_CALLBACK_URN,
       'auth_uri': GOOGLE_AUTH_URI,
       'scope': OAUTH_SCOPES,
       'token_uri': OAUTH_TOKEN_ENDPOINT,
@@ -305,39 +302,16 @@ def GetAuthorizationCodeViaBrowser(config):
   return AuthorizationCodeHandler.code
 
 
-def GetAuthorizationCodeViaCommandLine(config):
-  """Gets authorization code via command line.
-
-  This way is useful anywhere without a browser.
-
-  Args:
-    config: a dictionary of config.
-
-  Returns:
-    authorization code.
-  """
-  body = urlencode({
-      'scope': config['scope'],
-      'redirect_uri': config['redirect_uri'],
-      'client_id': config['client_id'],
-      'response_type': 'code'})
-  google_auth_url = '%s?%s' % (config['auth_uri'], body)
-  print('Please visit following URL with your browser, and approve access:')
-  print(google_auth_url)
-  return input('Please input the code:')
-
-
-def GetRefreshToken(get_code_func, config):
+def GetRefreshToken(config):
   """Get refresh token with oauth 3 legged authentication.
 
   Args:
-    get_code_func: a function for getting authorization code.
     config: a dictionary of config.
 
   Returns:
     a refresh token string.
   """
-  code = get_code_func(config)
+  code = GetAuthorizationCodeViaBrowser(config)
   assert code and isinstance(code, str)
   post_data = {
       'code': code,
@@ -441,30 +415,9 @@ def Login():
   """
   ConfirmUserAgreedToS()
 
-  parser = argparse.ArgumentParser()
-  parser.add_argument(
-      '--no-browser',
-      dest='browser',
-      default=True,
-      action='store_false',
-      help='Deprecated; no-op.')
-  options = parser.parse_args(sys.argv[2:])
-
   config = GomaOAuth2Config()
   config.update(DefaultOAuth2Config())
-  func = GetAuthorizationCodeViaCommandLine
-  if options.browser:
-    func = GetAuthorizationCodeViaBrowser
-  else:
-    sys.stderr.write(
-        'ERROR: The "--no-browser" flag is deprecated.\n\n'
-        'It uses the deprecated out-of-band (OOB) auth flow, which stopped'
-        ' working on 2022-10-03.\n\n'
-        'If you need to "goma_auth login" over SSH, run without "--no-browser".'
-        ' The tool prints instructions how to authenticate.')
-    return 1
-
-  config['refresh_token'] = GetRefreshToken(func, config)
+  config['refresh_token'] = GetRefreshToken(config)
 
   err = VerifyRefreshToken(config)
   if err:

@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@b819f7e9392d25db6705a6bd3c92be3bb91775e2",
+     "https://boringssl.googlesource.com/boringssl@f0518d45119dd4dd322a884669daf8247bc3c992",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -125,7 +125,7 @@ deps = {
          'packages': [
              {
                  'package': 'infra/3pp/tools/go/${{platform}}',
-                 'version': 'version:2@1.19.2',
+                 'version': 'version:2@1.19.3',
              },
          ],
          'dep_type': 'cipd',
@@ -187,7 +187,17 @@ deps = {
       ],
       'dep_type': 'cipd',
       'condition': 'host_os == "win" and checkout_mingw',
-    }
+    },
+    'client/third_party/ninja': {
+      'packages': [
+        # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/ninja
+        {
+          'package': 'infra/3pp/tools/ninja/${{platform}}',
+          'version': 'version:2@1.8.2.chromium.3',
+        }
+      ],
+      'dep_type': 'cipd',
+    },
 }
 
 hooks = [

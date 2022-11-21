@@ -1299,4 +1299,21 @@ TEST(CppParserTest, Int64ArithmeticsWorks2) {
   EXPECT_TRUE(cpp_parser.IsMacroDefined("OK3"));
 }
 
+TEST(CppParserTest, HasIncludeNextErrno) {
+  CppParser cpp_parser;
+  ASSERT_TRUE(cpp_parser.EnablePredefinedMacro("__has_include_next", false));
+  CppIncludeObserver include_observer(&cpp_parser);
+  cpp_parser.set_include_observer(&include_observer);
+  include_observer.SetInclude("errno.h", "");
+
+  cpp_parser.AddStringInput(
+      "#define errno (*_errno())\n"
+      "#if __has_include_next(<errno.h>)\n"
+      "# define OK\n"
+      "#endif\n",
+      "foo.cc");
+  EXPECT_TRUE(cpp_parser.ProcessDirectives());
+  EXPECT_TRUE(cpp_parser.IsMacroDefined("OK"));
+}
+
 }  // namespace devtools_goma

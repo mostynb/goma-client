@@ -31,6 +31,11 @@ bool CppMacroExpanderCBV::Expand(ArrayTokenList::const_iterator input_begin,
     }
 
     if (token.type == CppToken::MACRO_PARAM) {
+      if (token.v.param_index >= env.size()) {
+        LOG(WARNING) << "macro index wrong? param_index=" << token.v.param_index
+                     << " env.size=" << env.size() << " token=" << token;
+        return false;
+      }
       output->insert(output->end(),
                      env[token.v.param_index].begin(),
                      env[token.v.param_index].end());
@@ -90,8 +95,49 @@ bool CppMacroExpanderCBV::Expand(ArrayTokenList::const_iterator input_begin,
       output->push_back((parser_->*(macro->callback))());
       continue;
     }
+    if (macro->type == Macro::CBK_FUNC) {
+      // Since CBK_FUNC's num_args is 1, arg's size must also be 1.
+      if (macro->num_args != 1) {
+        LOG(WARNING) << "macro->num_args: " << macro->num_args;
+        return false;
+      }
+      ArgRangeVector args;
+      if (!GetMacroArguments(it, input_end, macro->num_args, &it, &args)) {
+        return false;
+      }
+      if (args.size() != 1) {
+        LOG(WARNING) << "args: " << args.size();
+        return false;
+      }
+      // expand only if macro params is used.
+      // e.g. consider
+      //  #if __has_include_next(<errno.h>)
+      // where errno is defined.
+      // crbug.com/1386100
+      bool need_expand = false;
+      ArrayTokenList arg;
+      for (auto it = args[0].first; it != args[0].second; ++it) {
+        const CppToken& token = *it;
+        if (token.type == CppToken::MACRO_PARAM) {
+          need_expand = true;
+        }
+        arg.push_back(token);
+      }
+      if (need_expand) {
+        Env new_env(1);
+        if (!Expand(args[0].first, args[0].second, space_handling, hideset, env,
+                    &new_env[0])) {
+          return false;
+        }
+        arg = new_env[0];
+      }
 
-    if (macro->type == Macro::CBK_FUNC || macro->type == Macro::FUNC) {
+      // CBK_FUNC should always return no-more expandable token.
+      output->push_back((parser_->*(macro->callback_func))(arg));
+      continue;
+    }
+
+    if (macro->type == Macro::FUNC) {
       // We don't support variadic macro. It might cause unexpected ','.
       // Also, if unbalanced parens, it can cause unexpected expression.
       // Fail for these.
@@ -113,23 +159,14 @@ bool CppMacroExpanderCBV::Expand(ArrayTokenList::const_iterator input_begin,
         }
       }
 
-      if (macro->type == Macro::CBK_FUNC) {
-        // Since CBK_FUNC's num_args is 1, new_env's size must also be 1.
-        DCHECK_EQ(1, macro->num_args);
-        DCHECK_EQ(1, new_env.size());
+      // TODO: Don't make new hideset, but update the current
+      // hideset (and remove it after Expand to reduce memory allocation).
+      MacroSet new_hideset(hideset);
+      new_hideset.Set(macro);
 
-        // CBK_FUNC should always return no-more expandable token.
-        output->push_back((parser_->*(macro->callback_func))(new_env[0]));
-      } else {
-        // TODO: Don't make new hideset, but update the current
-        // hideset (and remove it after Expand to reduce memory allocation).
-        MacroSet new_hideset(hideset);
-        new_hideset.Set(macro);
-
-        if (!Expand(macro->replacement.begin(), macro->replacement.end(),
-                    space_handling, new_hideset, new_env, output)) {
-          return false;
-        }
+      if (!Expand(macro->replacement.begin(), macro->replacement.end(),
+                  space_handling, new_hideset, new_env, output)) {
+        return false;
       }
 
       continue;

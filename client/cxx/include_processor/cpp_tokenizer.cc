@@ -379,6 +379,7 @@ int hex2int(int ch) {
 }
 
 // http://www.iso-9899.info/n1256.html#6.4.4.4
+// https://en.cppreference.com/w/cpp/language/character_literal
 // static
 bool CppTokenizer::ReadCharLiteral(CppInputStream* stream,
                                    CppToken* result_token) {
@@ -509,6 +510,15 @@ bool CppTokenizer::ReadCharLiteral(CppInputStream* stream,
          (cur[2] <<  8) |
          cur[3];
     stream->Advance(5, 0);
+  } else if (cur_len >= 7 && cur[0] == '\\' && cur[1] == 'u' &&
+             absl::ascii_isxdigit(cur[2]) && absl::ascii_isxdigit(cur[3]) &&
+             absl::ascii_isxdigit(cur[4]) && absl::ascii_isxdigit(cur[5]) &&
+             cur[6] == '\'') {
+    // support 4 hexdecimal digits unicode code point
+    // https://source.chromium.org/chromium/chromium/src/+/1000ea5c49504e68be87fecfe04de4dae96ee154:third_party/icu/source/common/ustrcase.cpp;l=43
+    token.v.int_value = (hex2int(cur[2]) << 12) | (hex2int(cur[3]) << 8) |
+                        (hex2int(cur[4]) << 4) | hex2int(cur[5]);
+    stream->Advance(7, 0);
   } else {
     // TODO: Support other literal form if necessary.
     LOG(ERROR) << "Unsupported char literal?: "
