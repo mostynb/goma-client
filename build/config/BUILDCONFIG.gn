@@ -221,6 +221,42 @@ set_defaults("source_set") {
   configs = default_compiler_configs
 }
 
+TESTONLY_AND_VISIBILITY = [
+  "testonly",
+  "visibility",
+]
+
+# compatibility with chromium/src/build/config/BUILDCONFIG.gn
+# for third_party/nasm
+#
+# Sets default dependencies for executable and shared library targets.
+#
+# Variables
+#   no_default_deps: used in third_party/nasm
+foreach(_target_type,
+        [
+          "executable",
+          "loadable_module",
+          "shared_library",
+        ]) {
+  template(_target_type) {
+    # Alias "target_name" because it is clobbered by forward_variables_from().
+    _target_name = target_name
+    target(_target_type, _target_name) {
+      forward_variables_from(invoker,
+                             "*",
+                             TESTONLY_AND_VISIBILITY + [ "no_default_deps" ])
+      forward_variables_from(invoker, TESTONLY_AND_VISIBILITY)
+      if (!defined(deps)) {
+        deps = []
+      }
+      if (!defined(invoker.no_default_deps) || !invoker.no_default_deps) {
+        deps += []  # need this?
+      }  # no need to fix for android
+    }
+  }
+}
+
 # Below code is copied from chromium/src/build/config/BUILDCONFIG.gn
 # ==============================================================================
 # COMPONENT SETUP

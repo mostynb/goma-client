@@ -44,26 +44,27 @@ class WorkerThreadManager {
   ~WorkerThreadManager();
 
   // Starts worker threads.
-  void Start(int num_threads) LOCKS_EXCLUDED(mu_);
+  void Start(int num_threads) ABSL_LOCKS_EXCLUDED(mu_);
 
   // Starts pool of num_threads.  Returns pool id that can be used for
   // RunClosureInPool().
   // Can't be called on a worker thread.
-  int StartPool(int num_threads, const std::string& name) LOCKS_EXCLUDED(mu_);
+  int StartPool(int num_threads, const std::string& name)
+      ABSL_LOCKS_EXCLUDED(mu_);
 
   // Starts new dedicated worker thread.
   void NewThread(OneshotClosure* closure, const std::string& name)
-      LOCKS_EXCLUDED(mu_);
+      ABSL_LOCKS_EXCLUDED(mu_);
 
-  size_t num_threads() const LOCKS_EXCLUDED(mu_);
+  size_t num_threads() const ABSL_LOCKS_EXCLUDED(mu_);
 
   // Shutdown. runs delayed closures as soon as possible.
   // Can't be called on a worker thread.
-  void Shutdown() LOCKS_EXCLUDED(mu_);
+  void Shutdown() ABSL_LOCKS_EXCLUDED(mu_);
 
   // Finishes all workers.
   // Can't be called on a worker thread.
-  void Finish() LOCKS_EXCLUDED(mu_);
+  void Finish() ABSL_LOCKS_EXCLUDED(mu_);
 
   ThreadId GetCurrentThreadId();
 
@@ -82,7 +83,7 @@ class WorkerThreadManager {
       const char* const location,
       absl::Duration period,
       std::unique_ptr<PermanentClosure> closure)
-      LOCKS_EXCLUDED(periodic_closure_id_mu_);
+      ABSL_LOCKS_EXCLUDED(periodic_closure_id_mu_);
 
   // Unregisters periodic closure.
   void UnregisterPeriodicClosure(PeriodicClosureId id);
@@ -90,19 +91,19 @@ class WorkerThreadManager {
   // Runs closure on least loaded worker thread in kFreePool.
   void RunClosure(const char* const location,
                   Closure* closure,
-                  Priority priority) LOCKS_EXCLUDED(mu_);
+                  Priority priority) ABSL_LOCKS_EXCLUDED(mu_);
 
   // Runs closure in pool, which was created by StartPool().
   void RunClosureInPool(const char* const location,
                         int pool,
                         Closure* closure,
-                        Priority priority) LOCKS_EXCLUDED(mu_);
+                        Priority priority) ABSL_LOCKS_EXCLUDED(mu_);
 
   // Runs closure on specified worker thread.
   void RunClosureInThread(const char* const location,
                           ThreadId id,
                           Closure* closure,
-                          Priority priority) LOCKS_EXCLUDED(mu_);
+                          Priority priority) ABSL_LOCKS_EXCLUDED(mu_);
 
   // Runs closure after msec on specified worker thread.
   // It takes onwership of closure. It will be deleted if it is canceled.
@@ -119,10 +120,10 @@ class WorkerThreadManager {
                                                ThreadId handle,
                                                absl::Duration delay,
                                                Closure* closure)
-      LOCKS_EXCLUDED(mu_);
+      ABSL_LOCKS_EXCLUDED(mu_);
 
-  std::string DebugString() const LOCKS_EXCLUDED(mu_);
-  void DebugLog() const LOCKS_EXCLUDED(mu_);
+  std::string DebugString() const ABSL_LOCKS_EXCLUDED(mu_);
+  void DebugLog() const ABSL_LOCKS_EXCLUDED(mu_);
 
  private:
   friend class WorkerThreadManagerTest;
@@ -132,23 +133,23 @@ class WorkerThreadManager {
       WorkerThread* alarmer, PeriodicClosureId id, const char* location,
       absl::Duration period, std::unique_ptr<PermanentClosure> closure);
 
-  WorkerThread* GetWorker(ThreadId id) LOCKS_EXCLUDED(mu_);
-  WorkerThread* GetWorkerUnlocked(ThreadId id) SHARED_LOCKS_REQUIRED(mu_);
+  WorkerThread* GetWorker(ThreadId id) ABSL_LOCKS_EXCLUDED(mu_);
+  WorkerThread* GetWorkerUnlocked(ThreadId id) ABSL_SHARED_LOCKS_REQUIRED(mu_);
   static WorkerThread* GetCurrentWorker();
 
   PeriodicClosureId NextPeriodicClosureId()
-      LOCKS_EXCLUDED(periodic_closure_id_mu_);
+      ABSL_LOCKS_EXCLUDED(periodic_closure_id_mu_);
 
   mutable ReadWriteLock mu_;
-  std::vector<WorkerThread*> workers_ GUARDED_BY(mu_);
-  size_t next_worker_index_ GUARDED_BY(mu_);
-  int next_pool_ GUARDED_BY(mu_);
+  std::vector<WorkerThread*> workers_ ABSL_GUARDED_BY(mu_);
+  size_t next_worker_index_ ABSL_GUARDED_BY(mu_);
+  int next_pool_ ABSL_GUARDED_BY(mu_);
 
   WorkerThread* alarm_worker_;
 
   Lock periodic_closure_id_mu_;
   PeriodicClosureId next_periodic_closure_id_
-      GUARDED_BY(periodic_closure_id_mu_);
+      ABSL_GUARDED_BY(periodic_closure_id_mu_);
 
   DISALLOW_COPY_AND_ASSIGN(WorkerThreadManager);
 };
@@ -162,15 +163,15 @@ class WorkerThreadRunner {
                      OneshotClosure* closure);
   ~WorkerThreadRunner();
 
-  void Wait() LOCKS_EXCLUDED(mu_);
-  bool Done() const LOCKS_EXCLUDED(mu_);
+  void Wait() ABSL_LOCKS_EXCLUDED(mu_);
+  bool Done() const ABSL_LOCKS_EXCLUDED(mu_);
 
  private:
-  void Run(OneshotClosure* closure) LOCKS_EXCLUDED(mu_);
+  void Run(OneshotClosure* closure) ABSL_LOCKS_EXCLUDED(mu_);
 
   mutable Lock mu_;
-  ConditionVariable cond_ GUARDED_BY(mu_);
-  bool done_ GUARDED_BY(mu_);
+  ConditionVariable cond_ ABSL_GUARDED_BY(mu_);
+  bool done_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(WorkerThreadRunner);
 };

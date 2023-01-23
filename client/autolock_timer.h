@@ -57,11 +57,11 @@ class AutoLockStat {
 
  private:
   FastLock lock_;
-  int count_ GUARDED_BY(lock_);
-  absl::Duration total_wait_time_ GUARDED_BY(lock_);
-  absl::Duration max_wait_time_ GUARDED_BY(lock_);
-  absl::Duration total_hold_time_ GUARDED_BY(lock_);
-  absl::Duration max_hold_time_ GUARDED_BY(lock_);
+  int count_ ABSL_GUARDED_BY(lock_);
+  absl::Duration total_wait_time_ ABSL_GUARDED_BY(lock_);
+  absl::Duration max_wait_time_ ABSL_GUARDED_BY(lock_);
+  absl::Duration total_hold_time_ ABSL_GUARDED_BY(lock_);
+  absl::Duration max_hold_time_ ABSL_GUARDED_BY(lock_);
 
   DISALLOW_COPY_AND_ASSIGN(AutoLockStat);
 };
@@ -84,7 +84,7 @@ class AutoLockStats {
 
  private:
   mutable Lock mu_;
-  std::vector<std::unique_ptr<AutoLockStat>> stats_ GUARDED_BY(mu_);
+  std::vector<std::unique_ptr<AutoLockStat>> stats_ ABSL_GUARDED_BY(mu_);
   DISALLOW_COPY_AND_ASSIGN(AutoLockStats);
 };
 
@@ -92,11 +92,11 @@ extern AutoLockStats* g_auto_lock_stats;
 
 class MutexAcquireStrategy {
  public:
-  static void Acquire(Lock* lock) EXCLUSIVE_LOCK_FUNCTION(lock) {
+  static void Acquire(Lock* lock) ABSL_EXCLUSIVE_LOCK_FUNCTION(lock) {
     lock->Acquire();
   }
 
-  static void Release(Lock* lock) UNLOCK_FUNCTION(lock) {
+  static void Release(Lock* lock) ABSL_UNLOCK_FUNCTION(lock) {
     lock->Release();
   }
 
@@ -106,11 +106,11 @@ class MutexAcquireStrategy {
 
 class ReadWriteLockAcquireSharedStrategy {
  public:
-  static void Acquire(ReadWriteLock* lock) SHARED_LOCK_FUNCTION(lock) {
+  static void Acquire(ReadWriteLock* lock) ABSL_SHARED_LOCK_FUNCTION(lock) {
     lock->AcquireShared();
   }
 
-  static void Release(ReadWriteLock* lock) UNLOCK_FUNCTION(lock) {
+  static void Release(ReadWriteLock* lock) ABSL_UNLOCK_FUNCTION(lock) {
     lock->ReleaseShared();
   }
 
@@ -120,11 +120,11 @@ class ReadWriteLockAcquireSharedStrategy {
 
 class ReadWriteLockAcquireExclusiveStrategy {
  public:
-  static void Acquire(ReadWriteLock* lock) EXCLUSIVE_LOCK_FUNCTION(lock) {
+  static void Acquire(ReadWriteLock* lock) ABSL_EXCLUSIVE_LOCK_FUNCTION(lock) {
     lock->AcquireExclusive();
   }
 
-  static void Release(ReadWriteLock* lock) UNLOCK_FUNCTION(lock) {
+  static void Release(ReadWriteLock* lock) ABSL_UNLOCK_FUNCTION(lock) {
     lock->ReleaseExclusive();
   }
 
@@ -134,11 +134,11 @@ class ReadWriteLockAcquireExclusiveStrategy {
 
 class AbslMutexAcquireSharedStrategy {
  public:
-  static void Acquire(absl::Mutex* lock) SHARED_LOCK_FUNCTION(lock) {
+  static void Acquire(absl::Mutex* lock) ABSL_SHARED_LOCK_FUNCTION(lock) {
     lock->ReaderLock();
   }
 
-  static void Release(absl::Mutex* lock) UNLOCK_FUNCTION(lock) {
+  static void Release(absl::Mutex* lock) ABSL_UNLOCK_FUNCTION(lock) {
     lock->ReaderUnlock();
   }
 
@@ -151,11 +151,11 @@ class AbslMutexAcquireSharedStrategy {
 
 class AbslMutexAcquireExclusiveStrategy {
  public:
-  static void Acquire(absl::Mutex* lock) EXCLUSIVE_LOCK_FUNCTION(lock) {
+  static void Acquire(absl::Mutex* lock) ABSL_EXCLUSIVE_LOCK_FUNCTION(lock) {
     lock->Lock();
   }
 
-  static void Release(absl::Mutex* lock) UNLOCK_FUNCTION(lock) {
+  static void Release(absl::Mutex* lock) ABSL_UNLOCK_FUNCTION(lock) {
     lock->Unlock();
   }
 
@@ -200,73 +200,68 @@ class AutoLockTimerBase {
   DISALLOW_COPY_AND_ASSIGN(AutoLockTimerBase);
 };
 
-class SCOPED_LOCKABLE AutoLockTimer
+class ABSL_SCOPED_LOCKABLE AutoLockTimer
     : private AutoLockTimerBase<Lock, MutexAcquireStrategy> {
  public:
-  AutoLockTimer(Lock* lock,
-                AutoLockStat* statp) EXCLUSIVE_LOCK_FUNCTION(lock)
-      : AutoLockTimerBase(lock, statp) {
-  }
+  AutoLockTimer(Lock* lock, AutoLockStat* statp)
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
+      : AutoLockTimerBase(lock, statp) {}
 
-  ~AutoLockTimer() UNLOCK_FUNCTION() {
-  }
+  ~AutoLockTimer() ABSL_UNLOCK_FUNCTION() {}
 };
 
-class SCOPED_LOCKABLE AutoAbslMutexTimer
+class ABSL_SCOPED_LOCKABLE AutoAbslMutexTimer
     : private AutoLockTimerBase<absl::Mutex,
                                 AbslMutexAcquireExclusiveStrategy> {
  public:
   AutoAbslMutexTimer(absl::Mutex* lock, AutoLockStat* statp)
-      EXCLUSIVE_LOCK_FUNCTION(lock)
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
       : AutoLockTimerBase(lock, statp) {}
 
-  ~AutoAbslMutexTimer() UNLOCK_FUNCTION() {}
+  ~AutoAbslMutexTimer() ABSL_UNLOCK_FUNCTION() {}
 };
 
-class SCOPED_LOCKABLE AutoReadWriteLockSharedTimer
+class ABSL_SCOPED_LOCKABLE AutoReadWriteLockSharedTimer
     : private AutoLockTimerBase<ReadWriteLock,
                                 ReadWriteLockAcquireSharedStrategy> {
  public:
-  AutoReadWriteLockSharedTimer(ReadWriteLock* lock,
-                               AutoLockStat* statp) SHARED_LOCK_FUNCTION(lock)
-      : AutoLockTimerBase(lock, statp) {
-  }
+  AutoReadWriteLockSharedTimer(ReadWriteLock* lock, AutoLockStat* statp)
+      ABSL_SHARED_LOCK_FUNCTION(lock)
+      : AutoLockTimerBase(lock, statp) {}
 
-  ~AutoReadWriteLockSharedTimer() UNLOCK_FUNCTION() {}
+  ~AutoReadWriteLockSharedTimer() ABSL_UNLOCK_FUNCTION() {}
 };
 
-class SCOPED_LOCKABLE AutoReadWriteLockExclusiveTimer
+class ABSL_SCOPED_LOCKABLE AutoReadWriteLockExclusiveTimer
     : private AutoLockTimerBase<ReadWriteLock,
                                 ReadWriteLockAcquireExclusiveStrategy> {
  public:
-  AutoReadWriteLockExclusiveTimer(ReadWriteLock* lock,
-                                  AutoLockStat* statp)
-      EXCLUSIVE_LOCK_FUNCTION(lock)
-      : AutoLockTimerBase(lock, statp) {
-  }
+  AutoReadWriteLockExclusiveTimer(ReadWriteLock* lock, AutoLockStat* statp)
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
+      : AutoLockTimerBase(lock, statp) {}
 
-  ~AutoReadWriteLockExclusiveTimer() UNLOCK_FUNCTION() {}
+  ~AutoReadWriteLockExclusiveTimer() ABSL_UNLOCK_FUNCTION() {}
 };
 
-class SCOPED_LOCKABLE AutoAbslMutexSharedTimer
+class ABSL_SCOPED_LOCKABLE AutoAbslMutexSharedTimer
     : private AutoLockTimerBase<absl::Mutex, AbslMutexAcquireSharedStrategy> {
  public:
   AutoAbslMutexSharedTimer(absl::Mutex* lock, AutoLockStat* statp)
-      SHARED_LOCK_FUNCTION(lock)
+      ABSL_SHARED_LOCK_FUNCTION(lock)
       : AutoLockTimerBase(lock, statp) {}
 
-  ~AutoAbslMutexSharedTimer() UNLOCK_FUNCTION() {}
+  ~AutoAbslMutexSharedTimer() ABSL_UNLOCK_FUNCTION() {}
 };
 
-class SCOPED_LOCKABLE AutoAbslMutexExclusiveTimer
+class ABSL_SCOPED_LOCKABLE AutoAbslMutexExclusiveTimer
     : private AutoLockTimerBase<absl::Mutex,
                                 AbslMutexAcquireExclusiveStrategy> {
  public:
   AutoAbslMutexExclusiveTimer(absl::Mutex* lock, AutoLockStat* statp)
-      EXCLUSIVE_LOCK_FUNCTION(lock)
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
       : AutoLockTimerBase(lock, statp) {}
 
-  ~AutoAbslMutexExclusiveTimer() UNLOCK_FUNCTION() {}
+  ~AutoAbslMutexExclusiveTimer() ABSL_UNLOCK_FUNCTION() {}
 };
 
 namespace internal {

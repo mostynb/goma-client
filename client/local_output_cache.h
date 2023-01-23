@@ -115,19 +115,18 @@ class LocalOutputCache {
   void UpdateCacheEntry(const SHA256HashValue& key);
 
   void StartGarbageCollection(WorkerThreadManager* wm)
-      LOCKS_EXCLUDED(entries_mu_);
-  void StopGarbageCollection() LOCKS_EXCLUDED(entries_mu_);
-  void GarbageCollectionThread() LOCKS_EXCLUDED(entries_mu_);
-  bool ShouldInvokeGarbageCollection() const
-      LOCKS_EXCLUDED(entries_mu_);
+      ABSL_LOCKS_EXCLUDED(entries_mu_);
+  void StopGarbageCollection() ABSL_LOCKS_EXCLUDED(entries_mu_);
+  void GarbageCollectionThread() ABSL_LOCKS_EXCLUDED(entries_mu_);
+  bool ShouldInvokeGarbageCollection() const ABSL_LOCKS_EXCLUDED(entries_mu_);
   bool ShouldInvokeGarbageCollectionUnlocked() const
-      SHARED_LOCKS_REQUIRED(entries_mu_);
+      ABSL_SHARED_LOCKS_REQUIRED(entries_mu_);
   bool ShouldContinueGarbageCollectionUnlocked() const
-      SHARED_LOCKS_REQUIRED(entries_mu_);
+      ABSL_SHARED_LOCKS_REQUIRED(entries_mu_);
   void RunGarbageCollection(GarbageCollectionStat* stat)
-      LOCKS_EXCLUDED(entries_mu_);
-  void WakeGCThread() LOCKS_EXCLUDED(entries_mu_);
-  void WaitUntilGarbageCollectionThreadDone() LOCKS_EXCLUDED(entries_mu_);
+      ABSL_LOCKS_EXCLUDED(entries_mu_);
+  void WakeGCThread() ABSL_LOCKS_EXCLUDED(entries_mu_);
+  void WaitUntilGarbageCollectionThreadDone() ABSL_LOCKS_EXCLUDED(entries_mu_);
 
   // Used only for test.
   void SetReady(bool ready);
@@ -150,19 +149,19 @@ class LocalOutputCache {
   // After loading all cache entries, |ready_| will become true.
   mutable Lock ready_mu_;
   ConditionVariable ready_cond_;
-  bool ready_ GUARDED_BY(ready_mu_);
+  bool ready_ ABSL_GUARDED_BY(ready_mu_);
 
   // cache entries. Older cache is first.
   using CacheEntryMap = LinkedUnorderedMap<SHA256HashValue, CacheEntry>;
-  mutable ReadWriteLock entries_mu_ ACQUIRED_AFTER(gc_mu_);
-  CacheEntryMap entries_ GUARDED_BY(entries_mu_);
+  mutable ReadWriteLock entries_mu_ ABSL_ACQUIRED_AFTER(gc_mu_);
+  CacheEntryMap entries_ ABSL_GUARDED_BY(entries_mu_);
   // total cache amount in bytes.
-  std::int64_t entries_total_cache_amount_ GUARDED_BY(entries_mu_);
+  std::int64_t entries_total_cache_amount_ ABSL_GUARDED_BY(entries_mu_);
 
   mutable Lock gc_mu_;
   ConditionVariable gc_cond_;
-  bool gc_should_done_ GUARDED_BY(gc_mu_);
-  bool gc_working_ GUARDED_BY(gc_mu_);
+  bool gc_should_done_ ABSL_GUARDED_BY(gc_mu_);
+  bool gc_working_ ABSL_GUARDED_BY(gc_mu_);
 
   StatsCounter stats_save_success_;
   StatsCounter stats_save_success_time_ms_;

@@ -55,7 +55,7 @@ _DUMP_FILE_SUFFIX = '.dmp'
 _CHECKSUM_FILE = 'sha256.json'
 _PORT_UNAVAILABLE = object()
 
-_TIMESTAMP_PATTERN = re.compile('(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})')
+_TIMESTAMP_PATTERN = re.compile(r'(\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2})')
 _TIMESTAMP_FORMAT = '%Y/%m/%d %H:%M:%S'
 
 _CRASH_SERVER = 'https://clients2.google.com/cr/report'
@@ -113,23 +113,6 @@ def _DecodeBytes(data):
   if isinstance(data, bytes):
     return data.decode('utf-8', 'ignore')
   return data
-
-
-def _ParseManifestContents(manifest):
-  """Parse contents of MANIFEST into a dictionary.
-
-  Args:
-    manifest: a string of manifest to be parsed.
-
-  Returns:
-    The dictionary of key and values in string.
-  """
-  output = {}
-  for line in manifest.splitlines():
-    pair = line.strip().split('=', 1)
-    if len(pair) == 2:
-      output[pair[0].strip()] = pair[1].strip()
-  return output
 
 
 def _ParseLsof(data):
@@ -472,7 +455,7 @@ class HttpProxyDriver:
     try:
       with open(self._host_file) as f:
         return f.read() != self._env.server_host
-    except IOError:
+    except OSError:
       pass
     return True
 
@@ -491,7 +474,7 @@ class HttpProxyDriver:
     try:
       with open(self._pid_file) as f:
         pid = int(f.read())
-    except IOError:  # http_proxy might not be started by goma_ctl before.
+    except OSError:  # http_proxy might not be started by goma_ctl before.
       pass
     if pid > 0:  # http_proxy should not need to be killed gracefully.
       print('killing http_proxy (pid=%d)...' % pid)
@@ -543,20 +526,10 @@ class GomaDriver:
         'goma_dir': self._PrintGomaDir,
         'update_hook': self._UpdateHook,
     }
-    self._version = 0
-    self._manifest = {}
     self._args = []
-    self._ReadManifest()
     self._compiler_proxy_running = None
     self._http_proxy_driver = HttpProxyDriver(self._env,
                                               self._env.GetGomaTmpDir())
-
-  def _ReadManifest(self):
-    """Reads MANIFEST file.
-    """
-    self._manifest = self._env.ReadManifest()
-    if 'VERSION' in self._manifest:
-      self._version = int(self._manifest['VERSION'])
 
   def _GetRunningCompilerProxyVersion(self):
     versionz = self._env.ControlCompilerProxy('/versionz', check_running=True)
@@ -601,8 +574,6 @@ class GomaDriver:
       self._KillStakeholders()
       self._compiler_proxy_running = False
 
-    if 'VERSION' in self._manifest:
-      print('Using goma VERSION=%s' % self._manifest['VERSION'])
     disk_version = self._GetDiskCompilerProxyVersion()
     print('GOMA version %s' % disk_version)
     if ensure and self._compiler_proxy_running:
@@ -1052,9 +1023,6 @@ class GomaDriver:
     except OSError:  # means file not exist and we can ignore it.
       version = ''
 
-    if self._version and version:
-      version = 'ver %d %s' % (self._version, version)
-
     send_user_info_default = False
     if _IsFlagTrue('GOMA_SEND_USER_INFO', default=send_user_info_default):
       guid = '%s@%s' % (self._env.GetUsername(), _GetHostname())
@@ -1196,13 +1164,6 @@ class GomaEnv:
       self._goma_fetch = os.path.join(self._dir, self._GOMA_FETCH)
     self._is_daemon_mode = False
     self._gomacc_binary = os.path.join(self._dir, self._GOMACC)
-    self._manifest = self.ReadManifest(self._dir)
-    self._platform = self._manifest.get('PLATFORM', '')
-    # If manifest does not have PLATFORM, goma_ctl.py tries to get it from env.
-    # See: b/16274764
-    if not self._platform:
-      self._platform = os.environ.get('PLATFORM', '')
-    self._version = self._manifest.get('VERSION', '')
     self._time = time.time()
     self._goma_params = None
     self._gomacc_socket = None
@@ -1244,21 +1205,6 @@ class GomaEnv:
 
   def GetScriptDir(self):
     return self._dir
-
-  def ReadManifest(self, directory=''):
-    """Read manifest from MANIFEST file in the directory.
-
-    Args:
-      directory: a string of directory name to read the manifest file.
-
-    Returns:
-      A dictionary of manifest if the manifest file exist.
-      Otherwise, an empty dictionary.
-    """
-    manifest_path = os.path.join(self._dir, directory, 'MANIFEST')
-    if not os.path.isfile(manifest_path):
-      return {}
-    return _ParseManifestContents(open(manifest_path, 'r').read())
 
   def AuthConfig(self):
     """Get `goma_auth.py config` output.
@@ -2049,7 +1995,6 @@ class GomaEnvWin(GomaEnv):
 
   def __init__(self):
     GomaEnv.__init__(self)
-    self._platform = 'win64'
 
   @staticmethod
   def GetPackageExtension(platform):
@@ -2200,10 +2145,6 @@ class GomaEnvPosix(GomaEnv):
 
   def __init__(self):
     GomaEnv.__init__(self)
-    # pylint: disable=E1101
-    # Configure from sysname in uname.
-    if os.uname()[0] == 'Darwin':
-      self._platform = 'mac'
     self._fuser_path = None
     self._lsof_path = None
     self._pwd = __import__('pwd')
@@ -2319,7 +2260,7 @@ class GomaEnvPosix(GomaEnv):
         raise Error('compiler_proxy lock and/or socket is owned by others.'
                     ' details=%s' % owned_by_others)
 
-    return set(str(x['pid']) for x in results)
+    return {str(x['pid']) for x in results}
 
   def KillStakeholders(self, force=False):
     pids = self._GetStakeholderPids()

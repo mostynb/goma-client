@@ -130,7 +130,7 @@ class SubProcessTask {
 
   mutable Lock mu_;
   ConditionVariable cond_;
-  SubProcessState::State state_ GUARDED_BY(mu_);
+  SubProcessState::State state_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(SubProcessTask);
 };

@@ -228,6 +228,7 @@ bool ArFile::ReadEntry(EntryHeader* header, std::string* body) {
       << "ar_hdr must be on even boundary: offset:" << offset;
 
   struct ar_hdr hdr;
+  memset(&hdr, ' ', sizeof(hdr));
   if (fd_.Read(&hdr, sizeof(hdr)) != sizeof(hdr)) {
     LOG(ERROR) << "failed to read."
                << " offset=" << offset;
@@ -270,6 +271,7 @@ void ArFile::GetEntries(std::vector<EntryHeader>* entries) {
   }
   std::string longnames;
   struct ar_hdr hdr;
+  memset(&hdr, ' ', sizeof(hdr));
   int i = 0;
   while (fd_.Read(&hdr, sizeof(hdr)) == sizeof(hdr)) {
     // offset of the beginning of each entry.
@@ -424,7 +426,7 @@ bool ArFile::CleanIfRanlib(const EntryHeader& hdr, std::string* body) {
   // We need to remove garbage bytes at the end of string area.
   const char* base = &(*body)[0];
   char* pos = const_cast<char*>(base) + kSymdefMagicSize;
-  uint32_t ranlib_size;
+  uint32_t ranlib_size = 0;
   memcpy(&ranlib_size, pos, sizeof(ranlib_size));
   const ranlib* ranlib_base = reinterpret_cast<const ranlib*>(
       pos + sizeof(ranlib_size));
@@ -435,7 +437,7 @@ bool ArFile::CleanIfRanlib(const EntryHeader& hdr, std::string* body) {
                  << " ranlib size=0x" << std::hex << ranlib_size;
     return false;
   }
-  uint32_t string_size;
+  uint32_t string_size = 0;
   memcpy(&string_size, pos, sizeof(string_size));
   const char* string_base = pos + sizeof(string_size);
   pos += sizeof(string_size) + string_size;

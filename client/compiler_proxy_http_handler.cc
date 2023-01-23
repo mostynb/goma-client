@@ -1360,7 +1360,7 @@ void CompilerProxyHttpHandler::RunTrackMemory() {
       WorkerThread::PRIORITY_LOW);
 }
 
-void CompilerProxyHttpHandler::TrackMemory() LOCKS_EXCLUDED(memory_mu_) {
+void CompilerProxyHttpHandler::TrackMemory() ABSL_LOCKS_EXCLUDED(memory_mu_) {
   int64_t memory_byte = GetConsumingMemoryOfCurrentProcess();
   int64_t virtual_memory_byte = GetVirtualMemoryOfCurrentProcess();
 

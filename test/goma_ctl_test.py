@@ -203,11 +203,6 @@ class FakeGomaEnv:
   def MayUsingDefaultIPCPort(self):
     return True
 
-  def ReadManifest(self, path=''):
-    if path:
-      return {'VERSION': 1}
-    return {}
-
   def UpdateEnvForHttpProxy(self):
     pass
 
@@ -381,40 +376,6 @@ class GomaCtlSmallTest(GomaCtlTestCommon):
     self._module._SetGomaFlagDefaultValueIfEmpty(flag_test_name,
                                                  flag_test_value)
     self.assertEqual(os.environ['GOMA_%s' % flag_test_name], flag_orig_value)
-
-  def testParseManifestContentsShouldReturnEmptyForEmptyLine(self):
-    self.assertEqual(self._module._ParseManifestContents(''), {})
-
-  def testParseManifestContentsShouldParseOneLine(self):
-    parsed = self._module._ParseManifestContents('key=val')
-    self.assertEqual(len(parsed), 1)
-    self.assertTrue('key' in parsed)
-    self.assertEqual(parsed['key'], 'val')
-
-  def testParseManifestContentsShouldParseMultipleLines(self):
-    parsed = self._module._ParseManifestContents('key0=val0\nkey1=val1')
-    self.assertEqual(len(parsed), 2)
-    self.assertTrue('key0' in parsed)
-    self.assertEqual(parsed['key0'], 'val0')
-    self.assertTrue('key1' in parsed)
-    self.assertEqual(parsed['key1'], 'val1')
-
-  def testParseManifestContentsShouldShowEmptyValueIfEndWithEqual(self):
-    parsed = self._module._ParseManifestContents('key=')
-    self.assertEqual(len(parsed), 1)
-    self.assertTrue('key' in parsed)
-    self.assertEqual(parsed['key'], '')
-
-  def testParseManifestContentsShouldParseLineWithMultipleEquals(self):
-    parsed = self._module._ParseManifestContents('key=label=value')
-    self.assertEqual(len(parsed), 1)
-    self.assertTrue('key' in parsed)
-    self.assertEqual(parsed['key'], 'label=value')
-
-  def testParseManifestContentsShouldIgnoreLineWitoutEquals(self):
-    parsed = self._module._ParseManifestContents('key')
-    self.assertEqual(len(parsed), 0)
-    self.assertFalse('key' in parsed)
 
   def testParseLsofShouldParse(self):
     test = ('u1\n'
@@ -1600,24 +1561,6 @@ class GomaEnvTest(GomaCtlTestCommon):
   # test should be able to access protected members and variables.
   # pylint: disable=W0212
 
-  def testShouldSetPlatformEnvIfPlatformNotInManifest(self):
-    os.environ['PLATFORM'] = 'goobuntu'
-    self.assertTrue(os.environ.get('PLATFORM'))
-    env = self._module.GomaEnv()
-    self.assertFalse(os.path.exists(os.path.join(env._dir, 'MANIFEST')))
-    self.assertEqual(env._platform, 'goobuntu')
-
-  def testShouldPreferPlatformInManifestToEnv(self):
-    os.environ['PLATFORM'] = 'goobuntu'
-    self.assertTrue(os.environ.get('PLATFORM'))
-    manifest_file = os.path.join(self._tmp_dir, self._TMP_SUBDIR_NAME,
-                                 'MANIFEST')
-    with open(manifest_file, 'w') as f:
-      f.write('PLATFORM=linux')
-    env = self._module.GomaEnv()
-    self.assertTrue(os.path.exists(os.path.join(env._dir, 'MANIFEST')))
-    self.assertEqual(env._platform, 'linux')
-
   def testGeneratedChecksumShouldBeValid(self):
     env = self._module.GomaEnv()
     cksums = env.LoadChecksum()
@@ -1755,33 +1698,6 @@ class GomaCtlLargeTest(GomaCtlTestCommon):
     if self._driver:
       self._driver._EnsureStopCompilerProxy()
     super().tearDown()
-
-  def StartWithModifiedVersion(self, version=None):
-    """Start compiler proxy with modified version.
-
-    Since start-up method is overwritten with dummy method, we do not need
-    to stop the compiler proxy.
-
-    Args:
-      version: current version to be written.
-    """
-    driver = self._module.GetGomaDriver()
-    manifest = {}
-    if version:
-      manifest['VERSION'] = version
-      # Not goma_ctl to ask the platform, let me put 'PLATFORM' param here.
-      manifest['PLATFORM'] = self._platform_specific.GetPlatform()
-      driver._env.WriteManifest(manifest)
-    driver = self._module.GetGomaDriver()
-    # Put fake methods instead of actual one to improve performance of tests.
-    driver._env.GetCompilerProxyVersion = lambda dummy = None: 'dummy'
-    driver._env.ExecCompilerProxy = lambda dummy = None: True
-
-    def DummyControlCompilerProxy(**_):
-      return {'status': True, 'message': 'msg', 'url': 'url', 'pid': '1'}
-    driver._env.ControlCompilerProxy = DummyControlCompilerProxy
-    driver._env.CompilerProxyRunning = lambda dummy = None: True
-    driver._StartCompilerProxy()
 
   def testEnsureShouldWorkWithoutFuserCommand(self):
     if isinstance(self._platform_specific, WindowsSpecific):

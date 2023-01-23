@@ -2,7 +2,7 @@
 
 vars = {
      "chromium_git": "https://chromium.googlesource.com",
-     "clang_revision": "b4df887c08422a2e98f124c24cef49349272fc24",
+     "clang_revision": "16bb37bbfe5b2666f574a1f22a2b223b2d18f278",
      "gn_version": "git_revision:dfcbc6fed0a8352696f92d67ccad54048ad182b3",
      "mingw_version": "version:2@11.2.0-6",
      "checkout_mingw": False,
@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@f0518d45119dd4dd322a884669daf8247bc3c992",
+     "https://boringssl.googlesource.com/boringssl@029d0e77fb64625469cc02c8df26767c72081dfd",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -79,7 +79,7 @@ deps = {
 
      # abseil
      "client/third_party/abseil/src":
-     "https://github.com/abseil/abseil-cpp.git@215105818dfde3174fe799600bb0f3cae233d0bf",
+     "https://github.com/abseil/abseil-cpp.git@0064d9db90d32d35e9f9d70e2df4ddf8d0ab1257",
 
      # google benchmark v1.4.1
      "client/third_party/benchmark/src":
@@ -125,7 +125,7 @@ deps = {
          'packages': [
              {
                  'package': 'infra/3pp/tools/go/${{platform}}',
-                 'version': 'version:2@1.19.3',
+                 'version': 'version:2@1.19.5',
              },
          ],
          'dep_type': 'cipd',

@@ -86,7 +86,7 @@ class Cache {
 
   mutable ReadWriteLock mu_;
   LinkedUnorderedMap<CacheKey, std::vector<CollectedModuleMapFile>> cache_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
 
   StatsCounter cache_hit_;
   StatsCounter cache_miss_;

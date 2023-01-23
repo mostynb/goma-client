@@ -28,35 +28,35 @@ class ThreadSafeVariable {
 
   // Returns the underlying object by making a copy. The copy is intentional so
   // that the data will not be modified without the lock.
-  T get() const LOCKS_EXCLUDED(mu_) {
+  T get() const ABSL_LOCKS_EXCLUDED(mu_) {
     AUTO_SHARED_LOCK(lock, &mu_);
     return storage_;
   }
 
   // Sets the underlying object.
   template <typename U>
-  void set(U&& v) LOCKS_EXCLUDED(mu_) {
+  void set(U&& v) ABSL_LOCKS_EXCLUDED(mu_) {
     AUTO_EXCLUSIVE_LOCK(lock, &mu_);
     storage_ = std::forward<U>(v);
   }
 
   // Runs a function to read the object. |mu_| will be held during the execution
   // of |f|.
-  void Run(const std::function<void(const T&)>& f) LOCKS_EXCLUDED(mu_) {
+  void Run(const std::function<void(const T&)>& f) ABSL_LOCKS_EXCLUDED(mu_) {
     AUTO_SHARED_LOCK(lock, &mu_);
     f(storage_);
   }
 
   // Runs a function that could potentially modify the object. |mu_| will be
   // held during the execution of |f|.
-  void Run(const std::function<void(T*)>& f) LOCKS_EXCLUDED(mu_) {
+  void Run(const std::function<void(T*)>& f) ABSL_LOCKS_EXCLUDED(mu_) {
     AUTO_EXCLUSIVE_LOCK(lock, &mu_);
     f(&storage_);
   }
 
  private:
   mutable ReadWriteLock mu_;
-  T storage_ GUARDED_BY(mu_);
+  T storage_ ABSL_GUARDED_BY(mu_);
 };
 
 }  // namespace devtools_goma

@@ -47,7 +47,7 @@ class SHA256HashCache {
   // |filepath| -> (filestat, hash of file)
   // We suppose the size of the hash map is quite small.
   // If it is not true, I suggest to use LinkedUnorderedMap instead.
-  absl::flat_hash_map<std::string, ValueT> cache_ GUARDED_BY(mu_);
+  absl::flat_hash_map<std::string, ValueT> cache_ ABSL_GUARDED_BY(mu_);
 
   // counter for test.
   StatsCounter total_;

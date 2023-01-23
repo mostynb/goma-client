@@ -58,9 +58,9 @@ class ListDirCache {
   StatsCounter miss_;
 
   ReadWriteLock rwlock_;
-  size_t current_entries_ GUARDED_BY(rwlock_);
+  size_t current_entries_ ABSL_GUARDED_BY(rwlock_);
   LinkedUnorderedMap<std::string, std::pair<FileStat, std::vector<DirEntry>>>
-      dir_entries_cache_ GUARDED_BY(rwlock_);
+      dir_entries_cache_ ABSL_GUARDED_BY(rwlock_);
 };
 
 }  // namespace devtools_goma

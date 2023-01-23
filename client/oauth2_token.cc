@@ -88,7 +88,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     CHECK(shutting_down_);
   }
 
-  std::string GetAccount() override LOCKS_EXCLUDED(mu_) {
+  std::string GetAccount() override ABSL_LOCKS_EXCLUDED(mu_) {
     std::string access_token;
     {
       AUTOLOCK(lock, &mu_);
@@ -154,7 +154,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     return config_->GetOAuth2Config(config);
   }
 
-  std::string GetAuthorization() const override LOCKS_EXCLUDED(mu_) {
+  std::string GetAuthorization() const override ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     if (absl::Now() < token_expiration_time_ && !token_type_.empty() &&
         !access_token_.empty()) {
@@ -163,7 +163,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     return "";
   }
 
-  bool ShouldRefresh() const override LOCKS_EXCLUDED(mu_) {
+  bool ShouldRefresh() const override ABSL_LOCKS_EXCLUDED(mu_) {
     const absl::Time now = absl::Now();
     AUTOLOCK(lock, &mu_);
     if (!config_->CanRefresh()) {
@@ -183,7 +183,8 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
   }
 
   void RunAfterRefresh(WorkerThread::ThreadId thread_id,
-                       OneshotClosure* closure) override LOCKS_EXCLUDED(mu_) {
+                       OneshotClosure* closure) override
+      ABSL_LOCKS_EXCLUDED(mu_) {
     const absl::Time now = absl::Now();
     {
       AUTOLOCK(lock, &mu_);
@@ -230,7 +231,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     }
   }
 
-  void Invalidate() override LOCKS_EXCLUDED(mu_) {
+  void Invalidate() override ABSL_LOCKS_EXCLUDED(mu_) {
     const absl::Time now = absl::Now();
     AUTOLOCK(lock, &mu_);
     if (access_token_.empty()) {
@@ -256,7 +257,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     DoCancel();
   }
 
-  void Shutdown() override LOCKS_EXCLUDED(mu_) {
+  void Shutdown() override ABSL_LOCKS_EXCLUDED(mu_) {
     {
       AUTOLOCK(lock, &mu_);
       if (shutting_down_) {
@@ -268,7 +269,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     client_->Shutdown();
   }
 
-  void Wait() override LOCKS_EXCLUDED(mu_) {
+  void Wait() override ABSL_LOCKS_EXCLUDED(mu_) {
     {
       AUTOLOCK(lock, &mu_);
       CHECK(shutting_down_) << "You must call Shutdown() beforehand.";
@@ -299,7 +300,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
   }
 
   void ParseOAuth2AccessTokenUnlocked(absl::Duration* next_update_in)
-      EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_) {
     constexpr auto kOAuthExpireTimeMargin = absl::Seconds(60);
     if (status_->err != OK) {
       LOG(ERROR) << "HTTP communication failed to refresh OAuth2 access token."
@@ -331,7 +332,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
         << " kOAuthExpireTimeMargin=" << kOAuthExpireTimeMargin;
   }
 
-  void Done() LOCKS_EXCLUDED(mu_) {
+  void Done() ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     DCHECK(THREAD_ID_IS_SELF(refresh_task_thread_id_));
     if (shutting_down_) {
@@ -431,7 +432,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     }
   }
 
-  void RunRefreshUnlocked() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+  void RunRefreshUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_) {
     DCHECK_EQ(RUN, state_);
     DCHECK(THREAD_ID_IS_SELF(refresh_task_thread_id_));
     InitRequest();
@@ -446,7 +447,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
             this, &GoogleOAuth2AccessTokenRefreshTask::Done));
   }
 
-  void RunRefresh() LOCKS_EXCLUDED(mu_) {
+  void RunRefresh() ABSL_LOCKS_EXCLUDED(mu_) {
     LOG(INFO) << "Run refresh.";
 
     AUTOLOCK(lock, &mu_);
@@ -463,7 +464,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
   }
 
   // RunRefreshNow() is used for RunDelayedClosureInThread in Done() above.
-  void RunRefreshNow() LOCKS_EXCLUDED(mu_) {
+  void RunRefreshNow() ABSL_LOCKS_EXCLUDED(mu_) {
     LOG(INFO) << "Run refresh now.";
 
     AUTOLOCK(lock, &mu_);
@@ -489,7 +490,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     RunRefreshUnlocked();
   }
 
-  void DoCancel() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+  void DoCancel() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_) {
     if (cancelling_) {
       LOG(INFO) << "already cancelling...";
       return;
@@ -525,7 +526,7 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
     }
   }
 
-  void Cancel() LOCKS_EXCLUDED(mu_) {
+  void Cancel() ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     DCHECK(THREAD_ID_IS_SELF(refresh_task_thread_id_));
     if (cancel_refresh_now_) {
@@ -552,18 +553,18 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
   mutable Lock mu_;
   // signaled when cancel_refresh_now_ or cancel_refresh_ become nullptr.
   ConditionVariable cond_;
-  std::unique_ptr<HttpClient::Status> status_ GUARDED_BY(mu_);
-  State state_ GUARDED_BY(mu_) = NOT_STARTED;
-  absl::optional<absl::Time> refresh_deadline_ GUARDED_BY(mu_);
-  std::string token_type_ GUARDED_BY(mu_);
-  std::string access_token_ GUARDED_BY(mu_);
-  std::string account_email_ GUARDED_BY(mu_);
-  absl::Time token_expiration_time_ GUARDED_BY(mu_);
-  absl::optional<absl::Time> last_network_error_time_ GUARDED_BY(mu_);
-  absl::optional<absl::Time> last_invalidated_time_ GUARDED_BY(mu_);
-  absl::Duration refresh_backoff_duration_ GUARDED_BY(mu_);
-  std::vector<std::pair<WorkerThread::ThreadId, OneshotClosure*>>
-      pending_tasks_ GUARDED_BY(mu_);
+  std::unique_ptr<HttpClient::Status> status_ ABSL_GUARDED_BY(mu_);
+  State state_ ABSL_GUARDED_BY(mu_) = NOT_STARTED;
+  absl::optional<absl::Time> refresh_deadline_ ABSL_GUARDED_BY(mu_);
+  std::string token_type_ ABSL_GUARDED_BY(mu_);
+  std::string access_token_ ABSL_GUARDED_BY(mu_);
+  std::string account_email_ ABSL_GUARDED_BY(mu_);
+  absl::Time token_expiration_time_ ABSL_GUARDED_BY(mu_);
+  absl::optional<absl::Time> last_network_error_time_ ABSL_GUARDED_BY(mu_);
+  absl::optional<absl::Time> last_invalidated_time_ ABSL_GUARDED_BY(mu_);
+  absl::Duration refresh_backoff_duration_ ABSL_GUARDED_BY(mu_);
+  std::vector<std::pair<WorkerThread::ThreadId, OneshotClosure*>> pending_tasks_
+      ABSL_GUARDED_BY(mu_);
 
   // This class cannot have an ownership of CancelableClosure.
   // It is valid until Cancel() is called or the closure is executed, and
@@ -572,14 +573,14 @@ class GoogleOAuth2AccessTokenRefreshTask : public OAuth2AccessTokenRefreshTask {
   //
   // cancel_refresh_now_ should set to nullptr when it become invalid.
   // cancel_refresh_ should also set to nullptr when it become invalid.
-  WorkerThreadManager::CancelableClosure* cancel_refresh_now_ GUARDED_BY(mu_) =
+  WorkerThreadManager::CancelableClosure* cancel_refresh_now_
+      ABSL_GUARDED_BY(mu_) = nullptr;
+  WorkerThreadManager::CancelableClosure* cancel_refresh_ ABSL_GUARDED_BY(mu_) =
       nullptr;
-  WorkerThreadManager::CancelableClosure* cancel_refresh_ GUARDED_BY(mu_) =
-      nullptr;
-  bool cancelling_ GUARDED_BY(mu_) = false;
-  WorkerThread::ThreadId refresh_task_thread_id_ GUARDED_BY(mu_);
-  bool has_set_thread_id_ GUARDED_BY(mu_) = false;
-  bool shutting_down_ GUARDED_BY(mu_) = false;
+  bool cancelling_ ABSL_GUARDED_BY(mu_) = false;
+  WorkerThread::ThreadId refresh_task_thread_id_ ABSL_GUARDED_BY(mu_);
+  bool has_set_thread_id_ ABSL_GUARDED_BY(mu_) = false;
+  bool shutting_down_ ABSL_GUARDED_BY(mu_) = false;
 
   DISALLOW_COPY_AND_ASSIGN(GoogleOAuth2AccessTokenRefreshTask);
 };

@@ -311,8 +311,8 @@ class NamedPipeServer::Conn {
   size_t written_;
 
   mutable Lock mu_;
-  WorkerThread::ThreadId closed_thread_id_ GUARDED_BY(mu_);
-  std::unique_ptr<OneshotClosure> closed_callback_ GUARDED_BY(mu_);
+  WorkerThread::ThreadId closed_thread_id_ ABSL_GUARDED_BY(mu_);
+  std::unique_ptr<OneshotClosure> closed_callback_ ABSL_GUARDED_BY(mu_);
 
   std::unique_ptr<Req> req_;
   std::unique_ptr<CloseWatcher> close_watcher_;

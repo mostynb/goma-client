@@ -131,7 +131,7 @@ class MockSocketServer {
 
   Lock mu_;
   ConditionVariable cond_;
-  int actions_ GUARDED_BY(mu_);
+  int actions_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(MockSocketServer);
 };

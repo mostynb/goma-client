@@ -179,7 +179,7 @@ class CompilerProxyHttpHandler : public ThreadpoolHttpServer::HttpHandler,
 
   void RunTrackMemory();
 
-  void TrackMemory() LOCKS_EXCLUDED(memory_mu_);
+  void TrackMemory() ABSL_LOCKS_EXCLUDED(memory_mu_);
 
   void DumpStatsToInfoLog();
 
@@ -213,7 +213,7 @@ class CompilerProxyHttpHandler : public ThreadpoolHttpServer::HttpHandler,
   PeriodicClosureId log_cleaner_closure_id_;
   PeriodicClosureId memory_tracker_closure_id_;
   mutable Lock rpc_sent_count_mu_;
-  uint64_t rpc_sent_count_ GUARDED_BY(rpc_sent_count_mu_);
+  uint64_t rpc_sent_count_ ABSL_GUARDED_BY(rpc_sent_count_mu_);
 
   std::map<std::string, HttpHandlerMethod> http_handlers_;
   std::map<std::string, HttpHandlerMethod> internal_http_handlers_;
@@ -222,7 +222,7 @@ class CompilerProxyHttpHandler : public ThreadpoolHttpServer::HttpHandler,
   const std::string tmpdir_;
 
   mutable Lock memory_mu_;
-  int64_t last_memory_byte_ GUARDED_BY(memory_mu_);
+  int64_t last_memory_byte_ ABSL_GUARDED_BY(memory_mu_);
 
 #if HAVE_HEAP_PROFILER
   const string compiler_proxy_heap_profile_file_;

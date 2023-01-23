@@ -58,11 +58,11 @@ class CompilerInfoState {
   std::unique_ptr<CompilerInfo> compiler_info_;
 
   mutable Lock mu_;
-  int refcnt_ GUARDED_BY(mu_);
+  int refcnt_ ABSL_GUARDED_BY(mu_);
   // When server side does not have the information about this compiler,
   // it's disabled.
-  bool disabled_ GUARDED_BY(mu_);
-  std::string disabled_reason_ GUARDED_BY(mu_);
+  bool disabled_ ABSL_GUARDED_BY(mu_);
+  std::string disabled_reason_ ABSL_GUARDED_BY(mu_);
 
   int used_;
 

@@ -86,13 +86,13 @@ class FileHashCache {
   // A map from filename to file cache info.
   ReadWriteLock file_cache_mutex_;
   absl::flat_hash_map<std::string, struct FileInfo> file_cache_
-      GUARDED_BY(file_cache_mutex_);
+      ABSL_GUARDED_BY(file_cache_mutex_);
 
   // A set of cache keys that have been stored, so we could believe a cache_key
   // in this set is in goma cache.
   ReadWriteLock known_cache_keys_mutex_;
   absl::flat_hash_set<std::string> known_cache_keys_
-      GUARDED_BY(known_cache_keys_mutex_);
+      ABSL_GUARDED_BY(known_cache_keys_mutex_);
 
   StatsCounter num_cache_hit_;
   StatsCounter num_cache_miss_;

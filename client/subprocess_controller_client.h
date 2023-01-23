@@ -75,7 +75,7 @@ class SubProcessControllerClient: public SubProcessController {
   SubProcessControllerClient(int fd, pid_t pid, Options options);
   ~SubProcessControllerClient() override;
   void Setup(WorkerThreadManager* wm, std::string tmp_dir);
-  void Delete() LOCKS_EXCLUDED(mu_);
+  void Delete() ABSL_LOCKS_EXCLUDED(mu_);
 
   // Sends request to server.
   void Register(std::unique_ptr<SubProcessReq> req) override;
@@ -91,11 +91,11 @@ class SubProcessControllerClient: public SubProcessController {
 
   void DoRead();
 
-  void OnClosed() LOCKS_EXCLUDED(mu_);
+  void OnClosed() ABSL_LOCKS_EXCLUDED(mu_);
   void RunCheckSignaled();
   void CheckSignaled();
 
-  void MaybeClearReadableEventUnlocked() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void MaybeClearReadableEventUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   WorkerThreadManager* wm_;
   WorkerThread::ThreadId thread_id_;
@@ -105,25 +105,25 @@ class SubProcessControllerClient: public SubProcessController {
   const pid_t server_pid_;
 
   mutable ReadWriteLock tmp_dir_mu_;
-  std::string tmp_dir_ GUARDED_BY(tmp_dir_mu_);
+  std::string tmp_dir_ ABSL_GUARDED_BY(tmp_dir_mu_);
 
   mutable Lock mu_;
   ConditionVariable cond_;  // condition to wait for all subproc_tasks_ done.
-  int next_id_ GUARDED_BY(mu_);
-  std::map<int, SubProcessTask*> subproc_tasks_ GUARDED_BY(mu_);
-  Options current_options_ GUARDED_BY(mu_);
-  PeriodicClosureId periodic_closure_id_ GUARDED_BY(mu_);
-  bool quit_ GUARDED_BY(mu_);
-  bool closed_ GUARDED_BY(mu_);
+  int next_id_ ABSL_GUARDED_BY(mu_);
+  std::map<int, SubProcessTask*> subproc_tasks_ ABSL_GUARDED_BY(mu_);
+  Options current_options_ ABSL_GUARDED_BY(mu_);
+  PeriodicClosureId periodic_closure_id_ ABSL_GUARDED_BY(mu_);
+  bool quit_ ABSL_GUARDED_BY(mu_);
+  bool closed_ ABSL_GUARDED_BY(mu_);
   // We prefer to use ClearReadable() instead of StopReadale() to unregister
   // poller events from the IO multiplexing module (e.g. epoll). However, epoll
   // doesn't allow an IO event to be unregistered for more than once. This flag
   // ensures it's unregistered only once.
   //
-  bool registered_readable_events_ GUARDED_BY(mu_);
+  bool registered_readable_events_ ABSL_GUARDED_BY(mu_);
 
   mutable Lock initialized_mu_;
-  bool initialized_ GUARDED_BY(initialized_mu_);
+  bool initialized_ ABSL_GUARDED_BY(initialized_mu_);
 
   DISALLOW_COPY_AND_ASSIGN(SubProcessControllerClient);
 };

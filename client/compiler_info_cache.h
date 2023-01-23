@@ -115,13 +115,13 @@ class CompilerInfoCache {
 
   // Takes the ownership of validator.
   // Use this for testing purpose.
-  void SetValidator(CompilerInfoValidator* validator) LOCKS_EXCLUDED(mu_);
-  CompilerInfoValidator* validator() const LOCKS_EXCLUDED(mu_) {
+  void SetValidator(CompilerInfoValidator* validator) ABSL_LOCKS_EXCLUDED(mu_);
+  CompilerInfoValidator* validator() const ABSL_LOCKS_EXCLUDED(mu_) {
     AUTO_SHARED_LOCK(lock, &mu_);
     return validator_.get();
   }
 
-  bool Save() LOCKS_EXCLUDED(mu_);
+  bool Save() ABSL_LOCKS_EXCLUDED(mu_);
 
  private:
   FRIEND_TEST(CompilerInfoCacheTest, LimitTableEntriesTest);
@@ -130,24 +130,25 @@ class CompilerInfoCache {
                     absl::Duration cache_holding_time);
 
   static std::string HashKey(const CompilerInfoData& data);
-  bool Load() LOCKS_EXCLUDED(mu_);
-  bool Unmarshal(const CompilerInfoDataTable& table) LOCKS_EXCLUDED(mu_);
+  bool Load() ABSL_LOCKS_EXCLUDED(mu_);
+  bool Unmarshal(const CompilerInfoDataTable& table) ABSL_LOCKS_EXCLUDED(mu_);
   bool UnmarshalUnlocked(const CompilerInfoDataTable& table)
-      EXCLUSIVE_LOCKS_REQUIRED(mu_);
-  bool Marshal(CompilerInfoDataTable* table) LOCKS_EXCLUDED(mu_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  bool Marshal(CompilerInfoDataTable* table) ABSL_LOCKS_EXCLUDED(mu_);
   static void LimitTableEntries(CompilerInfoDataTable* table, int num_entries);
-  bool MarshalUnlocked(CompilerInfoDataTable* table) SHARED_LOCKS_REQUIRED(mu_);
-  void Clear() LOCKS_EXCLUDED(mu_);
-  void ClearUnlocked() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  bool MarshalUnlocked(CompilerInfoDataTable* table)
+      ABSL_SHARED_LOCKS_REQUIRED(mu_);
+  void Clear() ABSL_LOCKS_EXCLUDED(mu_);
+  void ClearUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   CompilerInfoState* LookupUnlocked(const std::string& compiler_info_key,
                                     const std::string& abs_local_compiler_path)
-      SHARED_LOCKS_REQUIRED(mu_);
+      ABSL_SHARED_LOCKS_REQUIRED(mu_);
 
   // Check CompilerInfo validity. CompilerInfo that does not match with the
   // current local compiler will be removed or updated.
-  void UpdateOlderCompilerInfo() LOCKS_EXCLUDED(mu_);
-  void UpdateOlderCompilerInfoUnlocked() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void UpdateOlderCompilerInfo() ABSL_LOCKS_EXCLUDED(mu_);
+  void UpdateOlderCompilerInfoUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   friend class CompilerInfoCacheTest;
 
@@ -157,26 +158,26 @@ class CompilerInfoCache {
   const int max_num_entries_;
   const absl::Duration cache_holding_time_;
 
-  std::unique_ptr<CompilerInfoValidator> validator_ GUARDED_BY(mu_) =
+  std::unique_ptr<CompilerInfoValidator> validator_ ABSL_GUARDED_BY(mu_) =
       absl::make_unique<CompilerInfoCache::CompilerInfoValidator>();
 
   mutable ReadWriteLock mu_;
 
   // key: compiler_info_key
   absl::flat_hash_map<std::string, CompilerInfoState*> compiler_info_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
 
   // key: hash of CompilerInfoData. value: compiler_info_key.
   absl::flat_hash_map<std::string,
                       std::unique_ptr<absl::flat_hash_set<std::string>>>
-      keys_by_hash_ GUARDED_BY(mu_);
+      keys_by_hash_ ABSL_GUARDED_BY(mu_);
 
-  int num_stores_ GUARDED_BY(mu_) = 0;
-  int num_store_dups_ GUARDED_BY(mu_) = 0;
-  int num_miss_ GUARDED_BY(mu_) = 0;
-  int num_fail_ GUARDED_BY(mu_) = 0;
-  int loaded_size_ GUARDED_BY(mu_) = 0;
-  absl::Time loaded_timestamp_ GUARDED_BY(mu_) = absl::Now();
+  int num_stores_ ABSL_GUARDED_BY(mu_) = 0;
+  int num_store_dups_ ABSL_GUARDED_BY(mu_) = 0;
+  int num_miss_ ABSL_GUARDED_BY(mu_) = 0;
+  int num_fail_ ABSL_GUARDED_BY(mu_) = 0;
+  int loaded_size_ ABSL_GUARDED_BY(mu_) = 0;
+  absl::Time loaded_timestamp_ ABSL_GUARDED_BY(mu_) = absl::Now();
 
   DISALLOW_COPY_AND_ASSIGN(CompilerInfoCache);
 };

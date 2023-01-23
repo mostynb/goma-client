@@ -30,9 +30,9 @@ namespace rbe {
 class StatsManager {
  public:
   // Accumulates the RBE stats of |task|. This means |task| has finished.
-  void Accumulate(const CompileTask* task) LOCKS_EXCLUDED(mu_);
+  void Accumulate(const CompileTask* task) ABSL_LOCKS_EXCLUDED(mu_);
   void Accumulate(const CommandSpec& command_spec,
-                  const CompileStats& task_stats) LOCKS_EXCLUDED(mu_);
+                  const CompileStats& task_stats) ABSL_LOCKS_EXCLUDED(mu_);
 
   // Dumps the accumulated stats into |json|.
   // * Output format:
@@ -53,7 +53,7 @@ class StatsManager {
   //   },
   //   ...
   // ]
-  Json::Value DumpStats() const LOCKS_EXCLUDED(mu_);
+  Json::Value DumpStats() const ABSL_LOCKS_EXCLUDED(mu_);
 
  private:
   // A subset of CommandSpec
@@ -84,7 +84,7 @@ class StatsManager {
 
   mutable ReadWriteLock mu_;
   absl::flat_hash_map<CompilerKey, PerCompilerStats> per_compiler_stats_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
 };
 
 }  // namespace rbe

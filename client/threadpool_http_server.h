@@ -240,11 +240,11 @@ class ThreadpoolHttpServer {
 #endif
   void SendJobToWorkerThread(ScopedSocket&& socket, SocketType socket_type);
   void UpdateSocketIdleUnlocked(SocketType socket_type)
-      EXCLUSIVE_LOCKS_REQUIRED(mu_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   const std::string listen_addr_;
   int port_;
-  int port_ready_ GUARDED_BY(mu_);
+  int port_ready_ ABSL_GUARDED_BY(mu_);
   int num_find_ports_;
   WorkerThreadManager* wm_;
   int pool_;
@@ -259,12 +259,12 @@ class ThreadpoolHttpServer {
 
   mutable Lock mu_;
   ConditionVariable cond_;
-  int max_sockets_[NUM_SOCKET_TYPES] GUARDED_BY(mu_);
-  int num_sockets_[NUM_SOCKET_TYPES] GUARDED_BY(mu_);
-  int idle_counter_[NUM_SOCKET_TYPES] GUARDED_BY(mu_);
-  bool idle_counting_ GUARDED_BY(mu_);
-  std::vector<IdleClosure*> idle_closures_ GUARDED_BY(mu_);
-  RegisteredClosureID last_closure_id_ GUARDED_BY(mu_);
+  int max_sockets_[NUM_SOCKET_TYPES] ABSL_GUARDED_BY(mu_);
+  int num_sockets_[NUM_SOCKET_TYPES] ABSL_GUARDED_BY(mu_);
+  int idle_counter_[NUM_SOCKET_TYPES] ABSL_GUARDED_BY(mu_);
+  bool idle_counting_ ABSL_GUARDED_BY(mu_);
+  std::vector<IdleClosure*> idle_closures_ ABSL_GUARDED_BY(mu_);
+  RegisteredClosureID last_closure_id_ ABSL_GUARDED_BY(mu_);
 
 #ifdef _WIN32
   std::unique_ptr<PipeHandler> pipe_handler_;

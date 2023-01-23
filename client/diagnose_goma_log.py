@@ -117,7 +117,7 @@ class OpenWrapper:
     if ext == '.gz':
       self._fh = gzip.open(self._filename, 'rt')
     else:
-      self._fh = open(self._filename, 'rt')
+      self._fh = open(self._filename)
     return self._fh
 
   def __exit__(self, unused_exc_type, unused_exc_value, unused_traceback):
@@ -179,8 +179,7 @@ def IterLines(compiler_proxy_infos):
   """
   for logfile in compiler_proxy_infos:
     with OpenWrapper(logfile) as f:
-      for line in f:
-        yield line
+      yield from f
 
 
 def IterLoglines(lines):

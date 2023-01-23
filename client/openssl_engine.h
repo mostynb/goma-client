@@ -49,32 +49,32 @@ class OpenSSLContext {
   // to avoid dead lock.
   void Init(const std::string& hostname,
             absl::optional<absl::Duration> crl_max_valid_duration,
-            OneshotClosure* invalidate_closure) LOCKS_EXCLUDED(mu_);
+            OneshotClosure* invalidate_closure) ABSL_LOCKS_EXCLUDED(mu_);
   // Set proxy to be used to download CRLs.
   void SetProxy(const std::string& proxy_host, const int proxy_port);
 
   // Returns true if server's identity is valid.
-  bool IsValidServerIdentity(X509* cert) LOCKS_EXCLUDED(mu_);
+  bool IsValidServerIdentity(X509* cert) ABSL_LOCKS_EXCLUDED(mu_);
 
   // Returns true if one of X509 certificates have revoked.
-  bool IsRevoked(STACK_OF(X509) * x509s) LOCKS_EXCLUDED(mu_);
+  bool IsRevoked(STACK_OF(X509) * x509s) ABSL_LOCKS_EXCLUDED(mu_);
 
-  std::string GetCertsInfo() const LOCKS_EXCLUDED(mu_) {
+  std::string GetCertsInfo() const ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     return certs_info_;
   }
-  bool IsCrlReady() const LOCKS_EXCLUDED(mu_) {
+  bool IsCrlReady() const ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     return is_crl_ready_;
   }
-  const std::string GetLastErrorMessage() const LOCKS_EXCLUDED(mu_) {
+  const std::string GetLastErrorMessage() const ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     return last_error_;
   }
   size_t ref_cnt() { return ref_cnt_; }
   SSL* NewSSL();
   void DeleteSSL(SSL* ssl);
-  void Invalidate() LOCKS_EXCLUDED(mu_);
+  void Invalidate() ABSL_LOCKS_EXCLUDED(mu_);
 
   // Returns true if |hostname| matches |pattern|.
   // |pattern| may have a wildcard explained in RFC2818 Section 3.1.
@@ -91,21 +91,22 @@ class OpenSSLContext {
                                    std::string* crl_str);
 
   // Loads CRLs based on X509v3 CRL distribution point.
-  bool SetupCrlsUnlocked(STACK_OF(X509) * x509s) EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  bool SetupCrlsUnlocked(STACK_OF(X509) * x509s)
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   // TODO: Put those variables guarded by |mu_| into a single place.
   mutable Lock mu_;
   SSL_CTX* ctx_;  // Set once in Init()
   // Since we do not know good way to get CRLs from SSL_CTX, we will use crls_
   // to check revoked certificate.
-  std::vector<ScopedX509CRL> crls_ GUARDED_BY(mu_);
+  std::vector<ScopedX509CRL> crls_ ABSL_GUARDED_BY(mu_);
   std::string proxy_host_;
   int proxy_port_;
-  std::string certs_info_ GUARDED_BY(mu_);
+  std::string certs_info_ ABSL_GUARDED_BY(mu_);
   std::string hostname_;  // Set once in Init()
-  bool is_crl_ready_ GUARDED_BY(mu_);
-  std::string last_error_ GUARDED_BY(mu_);
-  absl::optional<absl::Time> last_error_time_ GUARDED_BY(mu_);
+  bool is_crl_ready_ ABSL_GUARDED_BY(mu_);
+  std::string last_error_ ABSL_GUARDED_BY(mu_);
+  absl::optional<absl::Time> last_error_time_ ABSL_GUARDED_BY(mu_);
   absl::optional<absl::Duration> crl_max_valid_duration_;  // Set once in Init()
 
   // ref_cnt_ represents the number of OpenSSLEngine using the class instance.
@@ -118,7 +119,7 @@ class OpenSSLContext {
   // e.g. th1: checks ref_cnt() == 0 -> th2: NewTLSEngine -> th1: delete.
   size_t ref_cnt_;
 
-  OneshotClosure* notify_invalidate_closure_ GUARDED_BY(mu_);
+  OneshotClosure* notify_invalidate_closure_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(OpenSSLContext);
 };
@@ -183,46 +184,47 @@ class OpenSSLEngineCache : public TLSEngineFactory {
  public:
   OpenSSLEngineCache();
   ~OpenSSLEngineCache() override;
-  TLSEngine* NewTLSEngine(int sock) override LOCKS_EXCLUDED(mu_);
-  void WillCloseSocket(int sock) override LOCKS_EXCLUDED(mu_);
+  TLSEngine* NewTLSEngine(int sock) override ABSL_LOCKS_EXCLUDED(mu_);
+  void WillCloseSocket(int sock) override ABSL_LOCKS_EXCLUDED(mu_);
   void AddCertificateFromFile(const std::string& ssl_cert_filename);
   void AddCertificateFromString(const std::string& ssl_cert);
-  std::string GetCertsInfo() override LOCKS_EXCLUDED(mu_) {
+  std::string GetCertsInfo() override ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     return ctx_->GetCertsInfo();
   }
-  void SetHostname(const std::string& hostname) override LOCKS_EXCLUDED(mu_) {
+  void SetHostname(const std::string& hostname) override
+      ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     hostname_ = hostname;
   }
   void SetProxy(const std::string& proxy_host, const int proxy_port)
-      LOCKS_EXCLUDED(mu_) {
+      ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     proxy_host_ = proxy_host;
     proxy_port_ = proxy_port;
   }
   void SetCRLMaxValidDuration(absl::optional<absl::Duration> duration)
-      LOCKS_EXCLUDED(mu_) {
+      ABSL_LOCKS_EXCLUDED(mu_) {
     AUTOLOCK(lock, &mu_);
     crl_max_valid_duration_ = std::move(duration);
   }
 
  private:
   std::unique_ptr<OpenSSLEngine> GetOpenSSLEngineUnlocked()
-      EXCLUSIVE_LOCKS_REQUIRED(mu_);
-  void InvalidateContext() LOCKS_EXCLUDED(mu_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void InvalidateContext() ABSL_LOCKS_EXCLUDED(mu_);
 
   mutable Lock mu_;
-  std::unique_ptr<OpenSSLContext> ctx_ GUARDED_BY(mu_);
+  std::unique_ptr<OpenSSLContext> ctx_ ABSL_GUARDED_BY(mu_);
   std::vector<std::unique_ptr<OpenSSLContext>> contexts_to_delete_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
   absl::flat_hash_map<int, std::unique_ptr<OpenSSLEngine>> ssl_map_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
   // Proxy configs to download CRLs.
-  std::string hostname_ GUARDED_BY(mu_);
-  std::string proxy_host_ GUARDED_BY(mu_);
-  int proxy_port_ GUARDED_BY(mu_);
-  absl::optional<absl::Duration> crl_max_valid_duration_ GUARDED_BY(mu_);
+  std::string hostname_ ABSL_GUARDED_BY(mu_);
+  std::string proxy_host_ ABSL_GUARDED_BY(mu_);
+  int proxy_port_ ABSL_GUARDED_BY(mu_);
+  absl::optional<absl::Duration> crl_max_valid_duration_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(OpenSSLEngineCache);
 };

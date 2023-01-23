@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copied from Chromium src/third_party/boringssl, and modified for Goma.
 # - We do not build/run tests.
 # - We do not need some architectures, which is listed in .gitignore.

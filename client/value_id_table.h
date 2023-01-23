@@ -58,8 +58,8 @@ class ValueIDTable {
 
  private:
   mutable ReadWriteLock mu_;
-  std::vector<T> values_ GUARDED_BY(mu_);
-  absl::flat_hash_map<T, Id> map_to_id_ GUARDED_BY(mu_);
+  std::vector<T> values_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_map<T, Id> map_to_id_ ABSL_GUARDED_BY(mu_);
 };
 
 }  // namespace devtools_goma

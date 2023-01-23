@@ -29,7 +29,7 @@ namespace devtools_goma {
 // NOTE: capability based thread safety analysis is not working well
 // for shared lock. So, let me keep using older style thread safety analysis.
 
-class LOCKABLE OsDependentLock {
+class ABSL_LOCKABLE OsDependentLock {
  public:
   OsDependentLock();
   ~OsDependentLock();
@@ -38,14 +38,14 @@ class LOCKABLE OsDependentLock {
 
   // If the lock is not held, take it and return true.  If the lock is already
   // held by something else, immediately return false.
-  bool Try() EXCLUSIVE_TRYLOCK_FUNCTION(true);
+  bool Try() ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true);
 
   // Take the lock, blocking until it is available if necessary.
-  void Acquire() EXCLUSIVE_LOCK_FUNCTION();
+  void Acquire() ABSL_EXCLUSIVE_LOCK_FUNCTION();
 
   // Release the lock.  This must only be called by the lock's holder: after
   // a successful call to Try, or a call to Lock.
-  void Release() UNLOCK_FUNCTION();
+  void Release() ABSL_UNLOCK_FUNCTION();
 
  private:
   friend class OsDependentCondVar;
@@ -56,22 +56,22 @@ class LOCKABLE OsDependentLock {
 };
 
 // AbslBackedLock supports both Lock and ReadWriteLock interfaces.
-class LOCKABLE AbslBackedLock {
+class ABSL_LOCKABLE AbslBackedLock {
  public:
   AbslBackedLock() = default;
   AbslBackedLock(const AbslBackedLock&) = delete;
   AbslBackedLock& operator=(const AbslBackedLock&) = delete;
 
-  bool Try() EXCLUSIVE_TRYLOCK_FUNCTION(true);
+  bool Try() ABSL_EXCLUSIVE_TRYLOCK_FUNCTION(true);
 
-  void Acquire() EXCLUSIVE_LOCK_FUNCTION();
-  void Release() UNLOCK_FUNCTION();
+  void Acquire() ABSL_EXCLUSIVE_LOCK_FUNCTION();
+  void Release() ABSL_UNLOCK_FUNCTION();
 
-  void AcquireShared() SHARED_LOCK_FUNCTION();
-  void ReleaseShared() UNLOCK_FUNCTION();
+  void AcquireShared() ABSL_SHARED_LOCK_FUNCTION();
+  void ReleaseShared() ABSL_UNLOCK_FUNCTION();
 
-  void AcquireExclusive() EXCLUSIVE_LOCK_FUNCTION();
-  void ReleaseExclusive() UNLOCK_FUNCTION();
+  void AcquireExclusive() ABSL_EXCLUSIVE_LOCK_FUNCTION();
+  void ReleaseExclusive() ABSL_UNLOCK_FUNCTION();
 
  private:
   friend class AbslBackedCondVar;
@@ -88,20 +88,17 @@ using Lock = OsDependentLock;
 
 // In Mac, pthread becomes very slow when contention happens.
 // Using OSSpinLock improves performance for short lock holding.
-class LOCKABLE FastLock {
+class ABSL_LOCKABLE FastLock {
  public:
   FastLock(const FastLock&) = delete;
   FastLock& operator=(const FastLock&) = delete;
 
   FastLock() : lock_(OS_SPINLOCK_INIT) {}
 
-  void Acquire() EXCLUSIVE_LOCK_FUNCTION() {
-    OSSpinLockLock(&lock_);
-  }
+  void Acquire() ABSL_EXCLUSIVE_LOCK_FUNCTION() { OSSpinLockLock(&lock_); }
 
-  void Release() UNLOCK_FUNCTION() {
-    OSSpinLockUnlock(&lock_);
-  }
+  void Release() ABSL_UNLOCK_FUNCTION() { OSSpinLockUnlock(&lock_); }
+
  private:
   // TODO: Use os_unfair_lock if available.
   // OSSpinLock is deprecated in 10.12.
@@ -114,18 +111,18 @@ using FastLock = Lock;
 
 #endif
 
-class LOCKABLE OsDependentRwLock {
+class ABSL_LOCKABLE OsDependentRwLock {
  public:
   OsDependentRwLock();
   ~OsDependentRwLock();
   OsDependentRwLock(const OsDependentRwLock&) = delete;
   OsDependentRwLock& operator=(const OsDependentRwLock&) = delete;
 
-  void AcquireShared() SHARED_LOCK_FUNCTION();
-  void ReleaseShared() UNLOCK_FUNCTION();
+  void AcquireShared() ABSL_SHARED_LOCK_FUNCTION();
+  void ReleaseShared() ABSL_UNLOCK_FUNCTION();
 
-  void AcquireExclusive() EXCLUSIVE_LOCK_FUNCTION();
-  void ReleaseExclusive() UNLOCK_FUNCTION();
+  void AcquireExclusive() ABSL_EXCLUSIVE_LOCK_FUNCTION();
+  void ReleaseExclusive() ABSL_UNLOCK_FUNCTION();
 
  private:
 #ifdef _WIN32
@@ -142,18 +139,16 @@ using ReadWriteLock = AbslBackedLock;
 using ReadWriteLock = OsDependentRwLock;
 #endif
 
-class SCOPED_LOCKABLE AutoLock {
+class ABSL_SCOPED_LOCKABLE AutoLock {
  public:
   // Does not take ownership of |lock|, which must refer to a valid Lock
   // that outlives this object.
-  explicit AutoLock(Lock* lock) EXCLUSIVE_LOCK_FUNCTION(lock)
+  explicit AutoLock(Lock* lock) ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
       : lock_(lock) {
     lock_->Acquire();
   }
 
-  ~AutoLock() UNLOCK_FUNCTION() {
-    lock_->Release();
-  }
+  ~AutoLock() ABSL_UNLOCK_FUNCTION() { lock_->Release(); }
 
   AutoLock(const AutoLock&) = delete;
   AutoLock& operator=(const AutoLock&) = delete;
@@ -162,38 +157,35 @@ class SCOPED_LOCKABLE AutoLock {
   Lock* lock_;
 };
 
-class SCOPED_LOCKABLE AutoFastLock {
+class ABSL_SCOPED_LOCKABLE AutoFastLock {
  public:
   AutoFastLock(const AutoFastLock&) = delete;
   AutoFastLock& operator=(const AutoFastLock&) = delete;
 
   // Does not take ownership of |lock|, which must refer to a valid FastLock
   // that outlives this object.
-  explicit AutoFastLock(FastLock* lock) EXCLUSIVE_LOCK_FUNCTION(lock)
+  explicit AutoFastLock(FastLock* lock) ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
       : lock_(lock) {
     lock_->Acquire();
   }
 
-  ~AutoFastLock() UNLOCK_FUNCTION() {
-    lock_->Release();
-  }
+  ~AutoFastLock() ABSL_UNLOCK_FUNCTION() { lock_->Release(); }
 
  private:
   FastLock* lock_;
 };
 
-class SCOPED_LOCKABLE AutoExclusiveLock {
+class ABSL_SCOPED_LOCKABLE AutoExclusiveLock {
  public:
   // Does not take ownership of |lock|, which must refer to a valid
   // ReadWriteLock that outlives this object.
   explicit AutoExclusiveLock(ReadWriteLock* lock)
-      EXCLUSIVE_LOCK_FUNCTION(lock) : lock_(lock) {
+      ABSL_EXCLUSIVE_LOCK_FUNCTION(lock)
+      : lock_(lock) {
     lock_->AcquireExclusive();
   }
 
-  ~AutoExclusiveLock() UNLOCK_FUNCTION() {
-    lock_->ReleaseExclusive();
-  }
+  ~AutoExclusiveLock() ABSL_UNLOCK_FUNCTION() { lock_->ReleaseExclusive(); }
 
   AutoExclusiveLock(const AutoExclusiveLock&) = delete;
   AutoExclusiveLock& operator=(const AutoExclusiveLock&) = delete;
@@ -202,18 +194,16 @@ class SCOPED_LOCKABLE AutoExclusiveLock {
   ReadWriteLock* lock_;
 };
 
-class SCOPED_LOCKABLE AutoSharedLock {
+class ABSL_SCOPED_LOCKABLE AutoSharedLock {
  public:
   // Does not take ownership of |lock|, which must refer to a valid
   // ReadWriteLock that outlives this object.
-  explicit AutoSharedLock(ReadWriteLock* lock) SHARED_LOCK_FUNCTION(lock)
+  explicit AutoSharedLock(ReadWriteLock* lock) ABSL_SHARED_LOCK_FUNCTION(lock)
       : lock_(lock) {
     lock_->AcquireShared();
   }
 
-  ~AutoSharedLock() UNLOCK_FUNCTION() {
-    lock_->ReleaseShared();
-  }
+  ~AutoSharedLock() ABSL_UNLOCK_FUNCTION() { lock_->ReleaseShared(); }
 
   AutoSharedLock(const AutoSharedLock&) = delete;
   AutoSharedLock& operator=(const AutoSharedLock&) = delete;

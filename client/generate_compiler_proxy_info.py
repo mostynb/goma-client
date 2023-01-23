@@ -49,7 +49,7 @@ def GetRevisionNumber():
         if re.match(r'[0-9a-f]+@\d+', rev):
           return rev
         print('revision seems not match the pattern: %s' % rev)
-    except IOError as ex:
+    except OSError as ex:
       print('cannot open revision number file: %s' % ex)
   # <commit hash>@<committer date unix timestamp>
   git_hash_output = os.popen('git log -1 --pretty=format:%H@%ct', 'r')
@@ -89,7 +89,7 @@ def GetGNArgs(gn_out_dir):
           continue
         contents.append(line.replace('"', '\'').replace('\\', '\\\\'))
     return ','.join(contents)
-  except IOError as ex:
+  except OSError as ex:
     print('cannot open args.gn file: %s' % ex)
     return 'unknown'
 
@@ -105,10 +105,10 @@ def GenerateSourceCode(out_dir, agnostic):
   if not agnostic:
     # Put this inside if to avoid invoking "UserAgentString()",
     # which will attempt to import `pwd`.
-    # File "../../client/generate_compiler_proxy_info.py", line 75, in 
+    # File "../../client/generate_compiler_proxy_info.py", line 75, in
     # UserAgentString
     #   return 'compiler-proxy built by %s at %s on %s ' % (GetUserName(),
-    # File "../../client/generate_compiler_proxy_info.py", line 29, in 
+    # File "../../client/generate_compiler_proxy_info.py", line 29, in
     # GetUserName
     #   return getpass.getuser()
     # File "C:\tools\msys64\mingw64\lib\python3.8\getpass.py", line 168, in

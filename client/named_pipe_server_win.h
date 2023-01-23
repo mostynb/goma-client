@@ -92,12 +92,12 @@ class NamedPipeServer {
   ScopedFd flusher_done_;
 
   mutable Lock mu_;
-  absl::flat_hash_set<Conn*> actives_ GUARDED_BY(mu_);
-  absl::flat_hash_set<Conn*> watches_ GUARDED_BY(mu_);
-  std::deque<Conn*> replies_ GUARDED_BY(mu_);
-  absl::flat_hash_set<Conn*> finished_ GUARDED_BY(mu_);
-  absl::flat_hash_set<Conn*> flushes_ GUARDED_BY(mu_);
-  bool shutting_down_ GUARDED_BY(mu_);
+  absl::flat_hash_set<Conn*> actives_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_set<Conn*> watches_ ABSL_GUARDED_BY(mu_);
+  std::deque<Conn*> replies_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_set<Conn*> finished_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_set<Conn*> flushes_ ABSL_GUARDED_BY(mu_);
+  bool shutting_down_ ABSL_GUARDED_BY(mu_);
 };
 
 }  // namespace devtools_goma

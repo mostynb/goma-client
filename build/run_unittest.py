@@ -83,7 +83,7 @@ def RunTest(build_dir, target, case_opt, non_stop):
             os.path.join('.', case),
             stdout=sys.stdout,
             stderr=sys.stderr,
-            timeout=60)
+            timeout=90)
         if return_code != 0:
           error_message = case + " failed"
           raise TestError(error_message)

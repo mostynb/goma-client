@@ -22,12 +22,13 @@ DescriptorPollerBase::DescriptorPollerBase(
   CHECK(poll_signaler_.valid());
 }
 
-bool DescriptorPollerBase::PollEvents(
-    const DescriptorMap& descriptors,
-    absl::Duration timeout,
-    int priority,
-    CallbackQueue* callbacks,
-    Lock* lock, AutoLockStat** statp) EXCLUSIVE_LOCKS_REQUIRED(lock) {
+bool DescriptorPollerBase::PollEvents(const DescriptorMap& descriptors,
+                                      absl::Duration timeout,
+                                      int priority,
+                                      CallbackQueue* callbacks,
+                                      Lock* lock,
+                                      AutoLockStat** statp)
+    ABSL_EXCLUSIVE_LOCKS_REQUIRED(lock) {
   CHECK(lock);
   CHECK(statp);
   if (!poll_thread_) {

@@ -198,10 +198,10 @@ class DepsCache {
   const int max_proto_size_in_mega_bytes_;
 
   mutable ReadWriteLock mu_;
-  DepsTable deps_table_ GUARDED_BY(mu_);
+  DepsTable deps_table_ ABSL_GUARDED_BY(mu_);
 
   mutable Lock loaded_mu_;
-  bool loaded_ GUARDED_BY(loaded_mu_);
+  bool loaded_ ABSL_GUARDED_BY(loaded_mu_);
 
   // Instead of using a filename, we alternatively use an id for
   // performance and memory space. So, we manage this table to convert
@@ -212,9 +212,9 @@ class DepsCache {
   ValueIDTable<SHA256HashValue> directive_hash_id_table_;
 
   mutable Lock count_mu_;
-  unsigned int hit_count_ GUARDED_BY(count_mu_);
-  unsigned int missed_count_ GUARDED_BY(count_mu_);
-  unsigned int missed_by_updated_count_ GUARDED_BY(count_mu_);
+  unsigned int hit_count_ ABSL_GUARDED_BY(count_mu_);
+  unsigned int missed_count_ ABSL_GUARDED_BY(count_mu_);
+  unsigned int missed_by_updated_count_ ABSL_GUARDED_BY(count_mu_);
 
   DISALLOW_COPY_AND_ASSIGN(DepsCache);
 };

@@ -85,28 +85,28 @@ class WorkerThread : public PlatformThread::Delegate {
    public:
     UnregisteredClosureData() : done_(false), location_(nullptr) {}
 
-    bool Done() const LOCKS_EXCLUDED(mu_) {
+    bool Done() const ABSL_LOCKS_EXCLUDED(mu_) {
       AUTOLOCK(lock, &mu_);
       return done_;
     }
-    void SetDone(bool b) LOCKS_EXCLUDED(mu_) {
+    void SetDone(bool b) ABSL_LOCKS_EXCLUDED(mu_) {
       AUTOLOCK(lock, &mu_);
       done_ = b;
     }
 
-    const char* Location() const LOCKS_EXCLUDED(mu_) {
+    const char* Location() const ABSL_LOCKS_EXCLUDED(mu_) {
       AUTOLOCK(lock, &mu_);
       return location_;
     }
-    void SetLocation(const char* location) LOCKS_EXCLUDED(mu_) {
+    void SetLocation(const char* location) ABSL_LOCKS_EXCLUDED(mu_) {
       AUTOLOCK(lock, &mu_);
       location_ = location;
     }
 
    private:
     mutable Lock mu_;
-    bool done_ GUARDED_BY(mu_);
-    const char* location_ GUARDED_BY(mu_);
+    bool done_ ABSL_GUARDED_BY(mu_);
+    const char* location_ ABSL_GUARDED_BY(mu_);
 
     DISALLOW_COPY_AND_ASSIGN(UnregisteredClosureData);
   };
@@ -147,18 +147,18 @@ class WorkerThread : public PlatformThread::Delegate {
   void Start();
 
   // Runs delayed closures as soon as possible.
-  void Shutdown() LOCKS_EXCLUDED(mu_);
+  void Shutdown() ABSL_LOCKS_EXCLUDED(mu_);
 
   // Requests to quit dispatch loop of the WorkerThread's thread, and terminate
   // the thread.
-  void Quit() LOCKS_EXCLUDED(mu_);
+  void Quit() ABSL_LOCKS_EXCLUDED(mu_);
 
   // Joins the WorkerThread's thread.  You must call Quit() before Join(), and
   // call Join() before destructing the WorkerThread.
-  void Join() LOCKS_EXCLUDED(mu_);
+  void Join() ABSL_LOCKS_EXCLUDED(mu_);
 
-  void ThreadMain() override LOCKS_EXCLUDED(mu_);
-  bool Dispatch() LOCKS_EXCLUDED(mu_);
+  void ThreadMain() override ABSL_LOCKS_EXCLUDED(mu_);
+  bool Dispatch() ABSL_LOCKS_EXCLUDED(mu_);
 
   // Registers file descriptor fd in priority.
   SocketDescriptor* RegisterSocketDescriptor(
@@ -166,33 +166,34 @@ class WorkerThread : public PlatformThread::Delegate {
   ScopedSocket DeleteSocketDescriptor(SocketDescriptor* d);
 
   void RegisterPollEvent(SocketDescriptor* d, DescriptorEventType)
-      LOCKS_EXCLUDED(mu_);
+      ABSL_LOCKS_EXCLUDED(mu_);
   void UnregisterPollEvent(SocketDescriptor* d, DescriptorEventType)
-      LOCKS_EXCLUDED(mu_);
-  void RegisterTimeoutEvent(SocketDescriptor* d) LOCKS_EXCLUDED(mu_);
-  void UnregisterTimeoutEvent(SocketDescriptor* d) LOCKS_EXCLUDED(mu_);
+      ABSL_LOCKS_EXCLUDED(mu_);
+  void RegisterTimeoutEvent(SocketDescriptor* d) ABSL_LOCKS_EXCLUDED(mu_);
+  void UnregisterTimeoutEvent(SocketDescriptor* d) ABSL_LOCKS_EXCLUDED(mu_);
 
   void RegisterPeriodicClosure(PeriodicClosureId id,
                                const char* const location,
                                absl::Duration period,
                                std::unique_ptr<PermanentClosure> closure)
-      LOCKS_EXCLUDED(mu_);
+      ABSL_LOCKS_EXCLUDED(mu_);
   void UnregisterPeriodicClosure(PeriodicClosureId id,
                                  UnregisteredClosureData* data)
-      LOCKS_EXCLUDED(mu_);
+      ABSL_LOCKS_EXCLUDED(mu_);
 
   void RunClosure(const char* const location,
                   Closure* closure,
-                  Priority priority) LOCKS_EXCLUDED(mu_);
+                  Priority priority) ABSL_LOCKS_EXCLUDED(mu_);
   CancelableClosure* RunDelayedClosure(const char* const location,
                                        absl::Duration delay,
-                                       Closure* closure) LOCKS_EXCLUDED(mu_);
+                                       Closure* closure)
+      ABSL_LOCKS_EXCLUDED(mu_);
 
-  size_t load() const LOCKS_EXCLUDED(mu_);
-  size_t pendings() const LOCKS_EXCLUDED(mu_);
+  size_t load() const ABSL_LOCKS_EXCLUDED(mu_);
+  size_t pendings() const ABSL_LOCKS_EXCLUDED(mu_);
 
-  bool IsIdle() const LOCKS_EXCLUDED(mu_);
-  std::string DebugString() const LOCKS_EXCLUDED(mu_);
+  bool IsIdle() const ABSL_LOCKS_EXCLUDED(mu_);
+  std::string DebugString() const ABSL_LOCKS_EXCLUDED(mu_);
 
   static std::string Priority_Name(Priority priority);
 
@@ -225,18 +226,18 @@ class WorkerThread : public PlatformThread::Delegate {
    public:
     ThreadSafeThreadId();
     // These two functions can only be called once.
-    void Initialize(ThreadId id) LOCKS_EXCLUDED(mu_);
-    void WaitUntilInitialized() LOCKS_EXCLUDED(mu_);
+    void Initialize(ThreadId id) ABSL_LOCKS_EXCLUDED(mu_);
+    void WaitUntilInitialized() ABSL_LOCKS_EXCLUDED(mu_);
     // Returns the thread ID. This must be called after WaitUntilInitialized()
     // has returned.
-    ThreadId get() const LOCKS_EXCLUDED(mu_);
+    ThreadId get() const ABSL_LOCKS_EXCLUDED(mu_);
     // Resets the thread ID when this thread is joined.
-    void Reset() LOCKS_EXCLUDED(mu_);
+    void Reset() ABSL_LOCKS_EXCLUDED(mu_);
 
    private:
     Notification init_n_;
     mutable ReadWriteLock mu_;
-    ThreadId id_ GUARDED_BY(mu_);
+    ThreadId id_ ABSL_GUARDED_BY(mu_);
   };
 
   typedef std::priority_queue<DelayedClosureImpl*,
@@ -251,17 +252,17 @@ class WorkerThread : public PlatformThread::Delegate {
   // Updates current_closure_ to run if any.
   // Returns false if no closure to run now (no pending, no network I/O and
   // no timeout).
-  bool NextClosure() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  bool NextClosure() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   // Adds closure in priority.
   // Assert mu_ held.
   void AddClosure(const char* const location,
                   Priority priority,
-                  Closure* closure) EXCLUSIVE_LOCKS_REQUIRED(mu_);
+                  Closure* closure) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   // Gets closure in priority.
   // Assert mu_ held.
-  ClosureData GetClosure(Priority priority) EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  ClosureData GetClosure(Priority priority) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   static void InitializeWorkerKey();
 
@@ -274,27 +275,28 @@ class WorkerThread : public PlatformThread::Delegate {
   ThreadSafeVariable<absl::optional<Timestamp>> now_cached_;
 
   mutable Lock mu_;
-  absl::optional<ClosureData> current_closure_data_ GUARDED_BY(mu_);
-  int tick_ GUARDED_BY(mu_);
-  bool shutting_down_ GUARDED_BY(mu_);
-  bool quit_ GUARDED_BY(mu_);
+  absl::optional<ClosureData> current_closure_data_ ABSL_GUARDED_BY(mu_);
+  int tick_ ABSL_GUARDED_BY(mu_);
+  bool shutting_down_ ABSL_GUARDED_BY(mu_);
+  bool quit_ ABSL_GUARDED_BY(mu_);
 
   // These auto_lock_stat_* are owned by g_auto_lock_stats.
   AutoLockStat* auto_lock_stat_next_closure_;
   AutoLockStat* auto_lock_stat_poll_events_;
 
-  std::deque<ClosureData> pendings_[NUM_PRIORITIES] GUARDED_BY(mu_);
-  int max_queuelen_[NUM_PRIORITIES] GUARDED_BY(mu_);
-  absl::Duration max_wait_time_[NUM_PRIORITIES] GUARDED_BY(mu_);
+  std::deque<ClosureData> pendings_[NUM_PRIORITIES] ABSL_GUARDED_BY(mu_);
+  int max_queuelen_[NUM_PRIORITIES] ABSL_GUARDED_BY(mu_);
+  absl::Duration max_wait_time_[NUM_PRIORITIES] ABSL_GUARDED_BY(mu_);
 
   // delayed_pendings_ and periodic_closures_ are handled in PRIORITY_IMMEDIATE
-  DelayedClosureQueue delayed_pendings_ GUARDED_BY(mu_);
+  DelayedClosureQueue delayed_pendings_ ABSL_GUARDED_BY(mu_);
   std::vector<std::unique_ptr<PeriodicClosure>> periodic_closures_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
 
-  std::map<int, std::unique_ptr<SocketDescriptor>> descriptors_ GUARDED_BY(mu_);
+  std::map<int, std::unique_ptr<SocketDescriptor>> descriptors_
+      ABSL_GUARDED_BY(mu_);
   std::unique_ptr<DescriptorPoller> poller_;
-  absl::Duration poll_interval_ GUARDED_BY(mu_);
+  absl::Duration poll_interval_ ABSL_GUARDED_BY(mu_);
 
   // Due to bugs like b/145046673 and b/131856067, we need to throttle the
   // thread by forcefully yielding the CPU if it has been in a consecutive idle
@@ -321,14 +323,14 @@ class WorkerThread : public PlatformThread::Delegate {
    private:
     friend class Raii;
 
-    void OnBusy() EXCLUSIVE_LOCKS_REQUIRED(mu_);
-    void OnIdle() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+    void OnBusy() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
+    void OnIdle() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
     const std::string name_;
     Lock* const mu_;
     int num_idle_;
   };
-  IdleLoopsThrottler idle_loops_throttler_ GUARDED_BY(mu_);
+  IdleLoopsThrottler idle_loops_throttler_ ABSL_GUARDED_BY(mu_);
 
   static absl::once_flag key_worker_once_;
 #ifndef _WIN32

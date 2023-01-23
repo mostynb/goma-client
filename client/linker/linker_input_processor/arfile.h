@@ -24,11 +24,11 @@ class ArFile {
  public:
   struct EntryHeader {
     std::string ar_name;
-    time_t ar_date;
-    uid_t ar_uid;
-    gid_t ar_gid;
-    mode_t ar_mode;
-    size_t ar_size;
+    time_t ar_date = 0;
+    uid_t ar_uid = 0;
+    gid_t ar_gid = 0;
+    mode_t ar_mode = 0;
+    size_t ar_size = 0;
 
     // original ar_name of the entry. ar_name would be modified for long name in
     // FixEntryName().

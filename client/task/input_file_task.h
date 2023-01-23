@@ -107,9 +107,9 @@ class InputFileTask {
   State state_;
 
   mutable Lock mu_;
-  std::map<CompileTask*, ExecReq_Input*> tasks_ GUARDED_BY(mu_);
+  std::map<CompileTask*, ExecReq_Input*> tasks_ ABSL_GUARDED_BY(mu_);
   std::vector<std::pair<WorkerThread::ThreadId, OneshotClosure*>> callbacks_
-      GUARDED_BY(mu_);
+      ABSL_GUARDED_BY(mu_);
 
   // true if goma servers couldn't find the content, so we must upload it.
   const bool missed_content_;
@@ -139,7 +139,7 @@ class InputFileTask {
 
   static Lock global_mu_;
   using FileToTaskMap = absl::flat_hash_map<std::string, InputFileTask*>;
-  static FileToTaskMap* task_by_filename_ GUARDED_BY(global_mu_);
+  static FileToTaskMap* task_by_filename_ ABSL_GUARDED_BY(global_mu_);
 };
 
 }  // namespace devtools_goma

@@ -56,18 +56,17 @@ class FilenameIdTable {
 
  private:
   bool InsertEntryUnlocked(const std::string& filename, Id id)
-      EXCLUSIVE_LOCKS_REQUIRED(mu_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
-  void ClearUnlocked()
-      EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void ClearUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   Id LookupIdUnlocked(const std::string& filename) const
-      SHARED_LOCKS_REQUIRED(mu_);
+      ABSL_SHARED_LOCKS_REQUIRED(mu_);
 
   mutable ReadWriteLock mu_;
-  Id next_available_id_ GUARDED_BY(mu_);
-  absl::flat_hash_map<Id, std::string> map_to_filename_ GUARDED_BY(mu_);
-  absl::flat_hash_map<std::string, Id> map_to_id_ GUARDED_BY(mu_);
+  Id next_available_id_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_map<Id, std::string> map_to_filename_ ABSL_GUARDED_BY(mu_);
+  absl::flat_hash_map<std::string, Id> map_to_id_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(FilenameIdTable);
 };

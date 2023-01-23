@@ -35,7 +35,7 @@ namespace devtools_goma {
 
 class StubArFile : public ArFile {
  public:
-  StubArFile() : read_header_return_(true) {}
+  StubArFile() : ArFile("stub") {}
   ~StubArFile() override {}
   bool IsThinArchive() const override { return true; }
   void GetEntries(std::vector<ArFile::EntryHeader>* entries ALLOW_UNUSED)
@@ -74,10 +74,10 @@ class StubArFile : public ArFile {
   }
 
  private:
-  bool read_header_return_;
+  bool read_header_return_ = true;
   std::string header_;
   struct EntryInfo {
-    bool return_value;
+    bool return_value = false;
     ArFile::EntryHeader header;
     std::string body;
   };
@@ -135,8 +135,10 @@ TEST(ArFileReaderTest, NormalizeArHeader) {
 }
 
 TEST(ArFileReaderTest, Read) {
-  char buf[kBufSize];
-  ssize_t len, copied;
+  char buf[kBufSize] = {
+      0,
+  };
+  ssize_t len = 0, copied = 0;
   ArFile::EntryHeader dummy_entry_header, expected_entry_header;
   dummy_entry_header.ar_name.assign(kDummyArname);
   dummy_entry_header.orig_ar_name.assign(kDummyArname);
@@ -296,7 +298,7 @@ TEST(ArFileReaderTest, Read) {
 class StubArFileReader : public ArFileReader {
  public:
   explicit StubArFileReader(const std::string& filename)
-      : ArFileReader(filename), valid_(true) {}
+      : ArFileReader(filename), valid_(true), read_return_(0) {}
 
   bool valid() const override { return valid_; }
   ssize_t Read(void* ptr, size_t len) override {
@@ -431,8 +433,10 @@ TEST_F(FatArFileReaderTest, Read) {
   std::unique_ptr<MacFatHeader> f_hdr;
   std::unique_ptr<StubArFileReader> stub_reader;
   MacFatArch dummy_arch;
-  char buf[kBufSize];
-  ssize_t len, copied;
+  char buf[kBufSize] = {
+      0,
+  };
+  ssize_t len = 0, copied = 0;
 
   // 0. Returns -1 if invalid.
   arfile_reader_.clear();

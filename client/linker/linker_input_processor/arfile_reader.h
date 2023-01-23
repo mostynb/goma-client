@@ -58,13 +58,13 @@ class ArFileReader : public FileReader {
   // else.
   static void NormalizeArHdr(ArFile::EntryHeader* hdr);
 
-  off_t current_offset_;
+  off_t current_offset_ = 0;
   // Data to be copied by Read function is stored to |read_buffer_|.
   // If |len| of Read function is less than |read_buffer_|, remained data will
   // be kept here until next call of Read.
   std::string read_buffer_;
   std::unique_ptr<ArFile> arfile_;
-  bool is_valid_;
+  bool is_valid_ = false;
 
   friend class FatArFileReader;
   friend class ArFileReaderTest;
@@ -110,16 +110,16 @@ class FatArFileReader : public FileReader {
   friend class ArFileReader;
   friend class FatArFileReaderTest;
   FRIEND_TEST(FatArFileReaderTest, Read);
-  bool is_valid_;
+  bool is_valid_ = false;
   std::string filename_;
   std::unique_ptr<MacFatHeader> f_hdr_;
   std::unique_ptr<ArFileReader> arr_;
   std::string read_buffer_;
-  off_t current_offset_;
+  off_t current_offset_ = 0;
 
   // To point architecture-related arfile position.
   MacFatArch* cur_arch_;
-  size_t cur_arch_idx_;
+  size_t cur_arch_idx_ = 0;
 
   ArFileReaderFactory* create_arfile_reader_factory_;
   DISALLOW_COPY_AND_ASSIGN(FatArFileReader);

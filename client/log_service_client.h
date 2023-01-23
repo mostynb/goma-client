@@ -67,12 +67,12 @@ class LogServiceClient {
   // Condition to check num_save_log_job_ becomes 0.
   ConditionVariable cond_;
   // Current SaveLogJob accumulating logs.
-  SaveLogJob* save_log_job_ GUARDED_BY(mu_);
+  SaveLogJob* save_log_job_ ABSL_GUARDED_BY(mu_);
   // Number of SaveLogJobs sending to the server.
-  int num_save_log_job_ GUARDED_BY(mu_);
+  int num_save_log_job_ ABSL_GUARDED_BY(mu_);
   SimpleTimer timer_;
   // Duration after start of |timer_| when Save*Log was called.
-  absl::Duration last_timestamp_ GUARDED_BY(mu_);
+  absl::Duration last_timestamp_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(LogServiceClient);
 };

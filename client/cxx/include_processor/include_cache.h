@@ -66,12 +66,12 @@ class IncludeCache {
 
   const IncludeCache::Item* GetItemIfNotModifiedUnlocked(
       const std::string& key,
-      const FileStat& file_stat) const SHARED_LOCKS_REQUIRED(rwlock_);
+      const FileStat& file_stat) const ABSL_SHARED_LOCKS_REQUIRED(rwlock_);
   void InsertUnlocked(const std::string& key,
                       std::unique_ptr<Item> include_item,
                       const FileStat& file_stat)
-      EXCLUSIVE_LOCKS_REQUIRED(rwlock_);
-  void EvictCacheUnlocked() EXCLUSIVE_LOCKS_REQUIRED(rwlock_);
+      ABSL_EXCLUSIVE_LOCKS_REQUIRED(rwlock_);
+  void EvictCacheUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(rwlock_);
 
   static IncludeCache* instance_;
 

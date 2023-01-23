@@ -102,8 +102,8 @@ class CompileService {
   const std::string& nodename() const { return nodename_; }
 
   const std::string& service_account_id() const { return service_account_id_; }
-  void SetServiceAccountId(std::string account) LOCKS_EXCLUDED(id_mu_);
-  const std::string& oauth2_email() const LOCKS_EXCLUDED(id_mu_) {
+  void SetServiceAccountId(std::string account) ABSL_LOCKS_EXCLUDED(id_mu_);
+  const std::string& oauth2_email() const ABSL_LOCKS_EXCLUDED(id_mu_) {
     AUTO_SHARED_LOCK(lock, &id_mu_);
     return oauth2_email_;
   }
@@ -362,7 +362,7 @@ class CompileService {
   // before.
   bool ContainFailedInput(const std::vector<std::string>& inputs) const;
 
-  void SetMaxSumOutputSize(size_t size) LOCKS_EXCLUDED(buf_mu_) {
+  void SetMaxSumOutputSize(size_t size) ABSL_LOCKS_EXCLUDED(buf_mu_) {
     AUTO_EXCLUSIVE_LOCK(lock, &buf_mu_);
     max_sum_output_size_ = size;
   }
@@ -371,11 +371,11 @@ class CompileService {
   // Returns true when succeeded and buf would have filesize buffer.
   // Returns false otherwise, and buf remains empty.
   bool AcquireOutputBuffer(size_t filesize, std::string* buf)
-      LOCKS_EXCLUDED(buf_mu_);
+      ABSL_LOCKS_EXCLUDED(buf_mu_);
   // Release output buffer acquired by AcquireOutputBuffer.
   // filesize and buf should be the same with AcquireOutputBuffer.
   void ReleaseOutputBuffer(size_t filesize, std::string* buf)
-      LOCKS_EXCLUDED(buf_mu_);
+      ABSL_LOCKS_EXCLUDED(buf_mu_);
 
   // Records output file is renamed or not.
   void RecordOutputRename(bool rename);
@@ -401,7 +401,7 @@ class CompileService {
                                      const std::string& key_cwd,
                                      std::string* local_compiler_path,
                                      std::string* no_goma_local_path) const
-      SHARED_LOCKS_REQUIRED(compiler_mu_);
+      ABSL_SHARED_LOCKS_REQUIRED(compiler_mu_);
   bool FindLocalCompilerPathAndUpdate(const std::string& key,
                                       const std::string& key_cwd,
                                       const std::string& gomacc_path,
@@ -416,8 +416,8 @@ class CompileService {
 
   const CompileTask* FindTaskByIdUnlocked(int task_id, bool include_active);
 
-  void DumpCommonStatsUnlocked(GomaStats* stats) SHARED_LOCKS_REQUIRED(buf_mu_)
-      EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  void DumpCommonStatsUnlocked(GomaStats* stats)
+      ABSL_SHARED_LOCKS_REQUIRED(buf_mu_) ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   void GetCompilerInfoInternal(GetCompilerInfoParam* param,
                                OneshotClosure* callback);
@@ -425,10 +425,10 @@ class CompileService {
   WorkerThreadManager* wm_;
 
   mutable Lock quit_mu_;
-  bool quit_ GUARDED_BY(quit_mu_) = false;
+  bool quit_ ABSL_GUARDED_BY(quit_mu_) = false;
 
   mutable Lock task_id_mu_;
-  int task_id_ GUARDED_BY(task_id_mu_) = 0;
+  int task_id_ ABSL_GUARDED_BY(task_id_mu_) = 0;
 
   // TODO: add thread annotation
   mutable Lock mu_;  // protects other fields.
@@ -448,11 +448,12 @@ class CompileService {
 
   // CompileTask's input that failed.
   mutable ReadWriteLock failed_inputs_mu_;
-  absl::flat_hash_set<std::string> failed_inputs_ GUARDED_BY(failed_inputs_mu_);
+  absl::flat_hash_set<std::string> failed_inputs_
+      ABSL_GUARDED_BY(failed_inputs_mu_);
 
   // TODO: add thread annotations to others.
   mutable ReadWriteLock id_mu_;
-  std::string oauth2_email_ GUARDED_BY(id_mu_);
+  std::string oauth2_email_ ABSL_GUARDED_BY(id_mu_);
 
   std::string username_;
   std::string nodename_;
@@ -476,7 +477,7 @@ class CompileService {
   mutable Lock compiler_info_mu_;
   // key: key_cwd: value: a list of waiting param+closure.
   absl::flat_hash_map<std::string, CompilerInfoWaiterList*>
-      compiler_info_waiters_ GUARDED_BY(compiler_info_mu_);
+      compiler_info_waiters_ ABSL_GUARDED_BY(compiler_info_mu_);
 
   std::unique_ptr<FileHashCache> file_hash_cache_;
 
@@ -537,7 +538,7 @@ class CompileService {
   //     if all path in <local_path> are absolute, "." is used for <cwd>.
   // value: (local_compiler_path, no_goma_local_path)
   absl::flat_hash_map<std::string, std::pair<std::string, std::string>>
-      local_compiler_paths_ GUARDED_BY(compiler_mu_);
+      local_compiler_paths_ ABSL_GUARDED_BY(compiler_mu_);
 
   int num_exec_request_ = 0;
   int num_exec_success_ = 0;
@@ -565,17 +566,17 @@ class CompileService {
   int num_file_dropped_ = 0;
   int num_file_output_ = 0;
   int num_file_rename_output_ = 0;
-  int num_file_output_buf_ GUARDED_BY(buf_mu_) = 0;
+  int num_file_output_buf_ ABSL_GUARDED_BY(buf_mu_) = 0;
 
   int num_include_processor_total_files_ = 0;
   int num_include_processor_skipped_files_ = 0;
   absl::Duration include_processor_total_wait_time_;
   absl::Duration include_processor_total_run_time_;
 
-  size_t cur_sum_output_size_ GUARDED_BY(buf_mu_) = 0;
-  size_t max_sum_output_size_ GUARDED_BY(buf_mu_) = 0;
-  size_t req_sum_output_size_ GUARDED_BY(buf_mu_) = 0;
-  size_t peak_req_sum_output_size_ GUARDED_BY(buf_mu_) = 0;
+  size_t cur_sum_output_size_ ABSL_GUARDED_BY(buf_mu_) = 0;
+  size_t max_sum_output_size_ ABSL_GUARDED_BY(buf_mu_) = 0;
+  size_t req_sum_output_size_ ABSL_GUARDED_BY(buf_mu_) = 0;
+  size_t peak_req_sum_output_size_ ABSL_GUARDED_BY(buf_mu_) = 0;
 
   bool can_send_user_info_ = false;
   absl::optional<absl::Duration> allowed_network_error_duration_;

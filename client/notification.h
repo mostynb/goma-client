@@ -19,14 +19,14 @@ class Notification {
   Notification(const Notification&) = delete;
   Notification& operator=(const Notification&) = delete;
 
-  bool HasBeenNotified() const LOCKS_EXCLUDED(mu_);
-  void WaitForNotification() LOCKS_EXCLUDED(mu_);
-  void Notify() LOCKS_EXCLUDED(mu_);
+  bool HasBeenNotified() const ABSL_LOCKS_EXCLUDED(mu_);
+  void WaitForNotification() ABSL_LOCKS_EXCLUDED(mu_);
+  void Notify() ABSL_LOCKS_EXCLUDED(mu_);
 
  private:
   mutable Lock mu_;
-  ConditionVariable cv_ GUARDED_BY(mu_);
-  bool has_been_notified_ GUARDED_BY(mu_) = false;
+  ConditionVariable cv_ ABSL_GUARDED_BY(mu_);
+  bool has_been_notified_ ABSL_GUARDED_BY(mu_) = false;
 };
 
 }  // namespace devtools_goma

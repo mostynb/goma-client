@@ -84,8 +84,8 @@ class CompileTask {
 
   CompileTask(CompileService* service, int id);
 
-  void Ref() LOCKS_EXCLUDED(refcnt_mu_);
-  void Deref() LOCKS_EXCLUDED(refcnt_mu_);
+  void Ref() ABSL_LOCKS_EXCLUDED(refcnt_mu_);
+  void Deref() ABSL_LOCKS_EXCLUDED(refcnt_mu_);
 
   // Task ID, a serial number.
   int id() const { return id_; }
@@ -503,7 +503,7 @@ class CompileTask {
   std::string local_output_cache_key_;
 
   mutable Lock refcnt_mu_;
-  int refcnt_ GUARDED_BY(refcnt_mu_) = 0;
+  int refcnt_ ABSL_GUARDED_BY(refcnt_mu_) = 0;
 
   PlatformThreadId thread_id_;
 
@@ -516,7 +516,8 @@ class CompileTask {
   static absl::once_flag init_once_;
 
   static Lock global_mu_;
-  static std::deque<CompileTask*>* link_file_req_tasks_ GUARDED_BY(global_mu_);
+  static std::deque<CompileTask*>* link_file_req_tasks_
+      ABSL_GUARDED_BY(global_mu_);
 
   DerefCleanupHandler* deref_cleanup_handler_ = nullptr;
 

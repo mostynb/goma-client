@@ -43,7 +43,7 @@ namespace {
 // TODO: We cannot call IsRunning() or Get() unless Create()
 // is called with this implementation.
 Lock* g_mu;
-SubProcessControllerClient* g_client_instance GUARDED_BY(*g_mu);
+SubProcessControllerClient* g_client_instance ABSL_GUARDED_BY(*g_mu);
 
 absl::once_flag g_init_once;
 void InitializeOnce() {

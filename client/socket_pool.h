@@ -83,7 +83,7 @@ class SocketPool : public SocketFactory {
   // connected socket into socket_pool_.
   // Returns FAIL if no address is available.
   // Returns ERR_TIMEOUT if timeout.
-  Errno InitializeUnlocked() EXCLUSIVE_LOCKS_REQUIRED(mu_);
+  Errno InitializeUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
   // Sets error_timetamp in AddrData for sock to |time|.
   void SetErrorTimestampUnlocked(int sock, absl::Time time);

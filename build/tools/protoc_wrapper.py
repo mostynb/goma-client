@@ -21,7 +21,6 @@ Features:
   This script adds the "target:" part.
 """
 
-from __future__ import print_function
 import argparse
 import os
 import subprocess
@@ -49,7 +48,7 @@ def VerifyProtoNames(protos):
 def StripProtoExtension(filename):
   if not filename.endswith(".proto"):
     raise RuntimeError("Invalid proto filename extension: "
-                       "{0} .".format(filename))
+                       "{} .".format(filename))
   return filename.rsplit(".", 1)[0]
 
 
@@ -65,12 +64,12 @@ def WriteIncludes(headers, include):
           if include_point_found:
             raise RuntimeError("Multiple include points found.")
           include_point_found = True
-          extra_statement = "#include \"{0}\"".format(include)
+          extra_statement = "#include \"{}\"".format(include)
           contents.append(extra_statement)
 
       if not include_point_found:
         raise RuntimeError("Include point not found in header: "
-                           "{0} .".format(filename))
+                           "{} .".format(filename))
 
     with open(filename, "w") as f:
       for line in contents:
@@ -218,7 +217,7 @@ def main(argv):
     else:
       error_number = "%d" % ret
     raise RuntimeError("Protoc has returned non-zero status: "
-                       "{0}".format(error_number))
+                       "{}".format(error_number))
 
   if dependency_file_data:
     with open(options.descriptor_set_dependency_file, 'w') as f:

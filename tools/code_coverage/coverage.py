@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Copyright 2018 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -28,7 +28,6 @@
   For more options, please refer to tools/code_coverage/coverage.py -h.
 """
 
-from __future__ import print_function
 
 import argparse
 from collections import defaultdict
@@ -87,7 +86,7 @@ INDEX_HTML_FILE = 'index.html'
 DIRECTORY_COVERAGE_HTML_REPORT_NAME = 'report.html'
 
 
-class _CoverageSummary(object):
+class _CoverageSummary:
   """Encapsulates coverage summary representation."""
 
   def __init__(self,
@@ -142,7 +141,7 @@ class _CoverageSummary(object):
           'covered']
 
 
-class _CoverageReportHtmlGenerator(object):
+class _CoverageReportHtmlGenerator:
   """Encapsulates coverage html report generation.
 
   The generated html has a table that contains links to other coverage reports.

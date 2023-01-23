@@ -267,8 +267,7 @@ class WinTool:
     # objidl.idl
     lines = out.splitlines()
     prefixes = ('Processing ', '64 bit Processing ')
-    processing = set(os.path.basename(x)
-                     for x in lines if x.startswith(prefixes))
+    processing = {os.path.basename(x) for x in lines if x.startswith(prefixes)}
     for line in lines:
       if not line.startswith(prefixes) and line not in processing:
         print(line)

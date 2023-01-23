@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # Copyright 2018 The Goma Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
@@ -21,7 +21,7 @@ import sys
 import tempfile
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
-CONTENT_LENGTH_PATTERN = re.compile('\r\nContent-Length:\s*(\d+)\r\n')
+CONTENT_LENGTH_PATTERN = re.compile('\r\nContent-Length:\\s*(\\d+)\r\n')
 READ_TIMEOUT_IN_SEC = 5.0
 
 
@@ -164,7 +164,7 @@ def main():
   s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
   with CompilerProxyManager() as cpm:
     before = cpm.Stat()
-    s.connect((cpm.ipc_socket))
+    s.connect(cpm.ipc_socket)
     s.send(data)
     s.close()
     if not cpm.IsRunning():

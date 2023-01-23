@@ -48,7 +48,7 @@ def ResolveRspLinks(inputs):
   rspfiles = [a[1:] for a in inputs if a.startswith('@')]
   resolved = set()
   for rspfile in rspfiles:
-    with open(rspfile, 'r') as f:
+    with open(rspfile) as f:
       resolved.update(shlex.split(f.read()))
 
   return resolved
@@ -66,7 +66,7 @@ def CombineResourceWhitelists(whitelist_candidates, outfile):
 
   resources = set()
   for whitelist in whitelists:
-    with open(whitelist, 'r') as f:
+    with open(whitelist) as f:
       resources.update(f.readlines())
 
   with open(outfile, 'w') as f:

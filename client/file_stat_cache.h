@@ -32,7 +32,7 @@ class GlobalFileStatCache {
 
  private:
   mutable ReadWriteLock mu_;
-  absl::flat_hash_map<std::string, FileStat> file_stats_ GUARDED_BY(mu_);
+  absl::flat_hash_map<std::string, FileStat> file_stats_ ABSL_GUARDED_BY(mu_);
 
   static GlobalFileStatCache* instance_;
 };

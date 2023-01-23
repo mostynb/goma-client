@@ -485,8 +485,8 @@ def _SetupVSEnv():
       os.path.join(_SCRIPT_DIR, '..', 'third_party', 'chromium_build',
                    'vs_toolchain.py'), 'get_toolchain_dir'
   ]).decode('utf-8')
-  vs_path_pattern = re.compile('^vs_path\s+=\s+"([^"]+)"')
-  sdk_path_pattern = re.compile('^sdk_path\s+=\s+"([^"]+)"')
+  vs_path_pattern = re.compile(r'^vs_path\s+=\s+"([^"]+)"')
+  sdk_path_pattern = re.compile(r'^sdk_path\s+=\s+"([^"]+)"')
   vs_path = None
   sdk_path = None
   for line in out.splitlines():

@@ -107,7 +107,7 @@ class HttpRPC {
   HttpClient* client_;
   const Options options_;
   mutable Lock mu_;
-  EncodingType request_encoding_type_ GUARDED_BY(mu_);
+  EncodingType request_encoding_type_ ABSL_GUARDED_BY(mu_);
 
   DISALLOW_COPY_AND_ASSIGN(HttpRPC);
 };
