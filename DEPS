@@ -2,7 +2,7 @@
 
 vars = {
      "chromium_git": "https://chromium.googlesource.com",
-     "clang_revision": "16bb37bbfe5b2666f574a1f22a2b223b2d18f278",
+     "clang_revision": "1214b4d328effc2e2d1c96f067baf96d0fdba611",
      "gn_version": "git_revision:dfcbc6fed0a8352696f92d67ccad54048ad182b3",
      "mingw_version": "version:2@11.2.0-6",
      "checkout_mingw": False,
@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@029d0e77fb64625469cc02c8df26767c72081dfd",
+     "https://boringssl.googlesource.com/boringssl@cbccae538c6f03cdf7b9fa263fd1c37724d7a769",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -193,7 +193,7 @@ deps = {
         # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/ninja
         {
           'package': 'infra/3pp/tools/ninja/${{platform}}',
-          'version': 'version:2@1.8.2.chromium.3',
+          'version': 'version:2@1.11.1.chromium.6',
         }
       ],
       'dep_type': 'cipd',

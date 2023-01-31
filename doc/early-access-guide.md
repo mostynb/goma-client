@@ -87,13 +87,14 @@ If there is a new Goma client commit, the prebuilt Goma client in cipd
 repository will automatically be updated, but your installation won't
 be updated automatically.
 
-To update your Goma installation, please make sure no program on your
-machine is using Goma. i.e. building chromium.
-Then, run `goma_ctl update_hook` to download and restart `compiler_proxy`.
+To update your Goma installation, please execute `update_depot_tools`,
+when the machine is not using Goma. i.e. building chromium.
 
 ```shell
-$ goma_ctl update_hook
+$ update_depot_tools
 ```
+
+Note: `gclient sync` will run `update_depot_tools` automatically.
 
 ## How to temporarily disable GOMA
 

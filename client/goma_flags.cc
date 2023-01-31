@@ -169,6 +169,18 @@ GOMA_DEFINE_bool(GOMACC_ALLOW_GDI32DLL,
                  "Allow gdi32.dll in gomacc.exe."
                  "https://chromium.googlesource.com/infra/goma/client/+/refs/"
                  "heads/main/doc/gomacc_gdi32.dll.md");
+
+// on windows, 10sec seems to be too short.
+// https://groups.google.com/a/google.com/g/goma-users/c/C-F60qVvcA0
+GOMA_DEFINE_int32(GOMACC_MAX_OVERHEAD_TIME,
+                  60,
+                  "Emit gomacc log if gomacc overhead is more than this "
+                  "time interval (in seconds)");
+#else
+GOMA_DEFINE_int32(GOMACC_MAX_OVERHEAD_TIME,
+                  10,
+                  "Emit gomacc log if gomacc overhead is more than this "
+                  "time interval (in seconds)");
 #endif
 
 GOMA_DEFINE_bool(GOMACC_ENABLE_CRASH_DUMP,
