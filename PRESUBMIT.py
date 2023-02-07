@@ -84,13 +84,18 @@ def CheckGNGenChecked(input_api, output_api):
 
 def CheckLucicfg(input_api, output_api):
   tests = []
+  # if any *.star file in infra/config is modified
+  # validate it by using infra/config/main.star as entrypoint.
   files = [
-      f.AbsoluteLocalPath() for f in input_api.AffectedFiles(
-          file_filter=lambda x: x.LocalPath().endswith('.star'))
+      f.AbsoluteLocalPath()
+      for f in input_api.AffectedFiles(file_filter=lambda x: (x.LocalPath(
+      ).endswith('.star') and x.LocalPath().startswith(
+          input_api.os_path.join('infra', 'config'))))
   ]
-  for f in files:
+  if files:
     tests += input_api.canned_checks.CheckLucicfgGenOutput(
-        input_api, output_api, f)
+        input_api, output_api,
+        input_api.os_path.join('infra', 'config', 'main.star'))
   return input_api.RunTests(tests)
 
 
@@ -133,6 +138,8 @@ def CheckChangeOnUpload(input_api, output_api):
 
   def long_line_filter(x):
     if x.LocalPath().endswith(".go"):
+      return False
+    if x.LocalPath().endswith(".star"):
       return False
     if input_api.os_path.basename(x.LocalPath()) == 'OWNERS':
       return False

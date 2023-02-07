@@ -395,7 +395,7 @@ function objcmp() {
 # Emulate gomacc cancel and confirm the compiler_proxy won't crash.
 # (crbug.com/904532)
 expect_success "gomacc_cancel" \
-  "GOMA_DIR=${goma_bin_dir} python ${test_dir}/gomacc_close.py"
+  "GOMA_DIR=${goma_bin_dir} python3 ${test_dir}/gomacc_close.py"
 
 CFLAGS=
 CXXFLAGS=

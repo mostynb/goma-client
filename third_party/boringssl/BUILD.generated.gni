@@ -93,7 +93,6 @@ crypto_sources = [
   "src/crypto/cpu_arm_linux.c",
   "src/crypto/cpu_arm_linux.h",
   "src/crypto/cpu_intel.c",
-  "src/crypto/cpu_ppc64le.c",
   "src/crypto/crypto.c",
   "src/crypto/curve25519/curve25519.c",
   "src/crypto/curve25519/curve25519_tables.h",
@@ -281,8 +280,6 @@ crypto_sources = [
   "src/crypto/x509v3/v3_lib.c",
   "src/crypto/x509v3/v3_ncons.c",
   "src/crypto/x509v3/v3_ocsp.c",
-  "src/crypto/x509v3/v3_pci.c",
-  "src/crypto/x509v3/v3_pcia.c",
   "src/crypto/x509v3/v3_pcons.c",
   "src/crypto/x509v3/v3_pmaps.c",
   "src/crypto/x509v3/v3_prn.c",
@@ -453,6 +450,7 @@ crypto_sources_apple_aarch64 = [
   "apple-aarch64/crypto/fipsmodule/aesv8-armv8-apple.S",
   "apple-aarch64/crypto/fipsmodule/aesv8-gcm-armv8-apple.S",
   "apple-aarch64/crypto/fipsmodule/armv8-mont-apple.S",
+  "apple-aarch64/crypto/fipsmodule/bn-armv8-apple.S",
   "apple-aarch64/crypto/fipsmodule/ghash-neon-armv8-apple.S",
   "apple-aarch64/crypto/fipsmodule/ghashv8-armv8-apple.S",
   "apple-aarch64/crypto/fipsmodule/p256-armv8-asm-apple.S",
@@ -522,6 +520,7 @@ crypto_sources_linux_aarch64 = [
   "linux-aarch64/crypto/fipsmodule/aesv8-armv8-linux.S",
   "linux-aarch64/crypto/fipsmodule/aesv8-gcm-armv8-linux.S",
   "linux-aarch64/crypto/fipsmodule/armv8-mont-linux.S",
+  "linux-aarch64/crypto/fipsmodule/bn-armv8-linux.S",
   "linux-aarch64/crypto/fipsmodule/ghash-neon-armv8-linux.S",
   "linux-aarch64/crypto/fipsmodule/ghashv8-armv8-linux.S",
   "linux-aarch64/crypto/fipsmodule/p256-armv8-asm-linux.S",
@@ -547,12 +546,6 @@ crypto_sources_linux_arm = [
   "linux-arm/crypto/test/trampoline-armv4-linux.S",
   "src/crypto/curve25519/asm/x25519-asm-arm.S",
   "src/crypto/poly1305/poly1305_arm_asm.S",
-]
-
-crypto_sources_linux_ppc64le = [
-  "linux-ppc64le/crypto/fipsmodule/aesp8-ppc-linux.S",
-  "linux-ppc64le/crypto/fipsmodule/ghashp8-ppc-linux.S",
-  "linux-ppc64le/crypto/test/trampoline-ppc-linux.S",
 ]
 
 crypto_sources_linux_x86 = [
@@ -591,6 +584,7 @@ crypto_sources_linux_x86_64 = [
   "linux-x86_64/crypto/fipsmodule/x86_64-mont-linux.S",
   "linux-x86_64/crypto/fipsmodule/x86_64-mont5-linux.S",
   "linux-x86_64/crypto/test/trampoline-x86_64-linux.S",
+  "src/crypto/hrss/asm/poly_rq_mul.S",
 ]
 
 crypto_sources_win_aarch64 = [
@@ -599,6 +593,7 @@ crypto_sources_win_aarch64 = [
   "win-aarch64/crypto/fipsmodule/aesv8-armv8-win.S",
   "win-aarch64/crypto/fipsmodule/aesv8-gcm-armv8-win.S",
   "win-aarch64/crypto/fipsmodule/armv8-mont-win.S",
+  "win-aarch64/crypto/fipsmodule/bn-armv8-win.S",
   "win-aarch64/crypto/fipsmodule/ghash-neon-armv8-win.S",
   "win-aarch64/crypto/fipsmodule/ghashv8-armv8-win.S",
   "win-aarch64/crypto/fipsmodule/p256-armv8-asm-win.S",
@@ -654,6 +649,7 @@ fuzzers = [
   "bn_mod_exp",
   "cert",
   "client",
+  "conf",
   "decode_client_hello_inner",
   "der_roundtrip",
   "dtls_client",

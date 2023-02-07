@@ -92,27 +92,27 @@ bool ParseOAuth2Config(const std::string& str, OAuth2Config* config) {
 
   std::string auth_uri;
   if (!GetNonEmptyStringFromJson(root, kAuthURI, &auth_uri, &err)) {
-    LOG(WARNING) << err;
+    LOG(INFO) << err;
     auth_uri = kGoogleAuthURI;
   }
 
   std::string token_uri;
   if (!GetNonEmptyStringFromJson(root, kTokenURI, &token_uri, &err)) {
-    LOG(WARNING) << err;
+    LOG(INFO) << err;
     token_uri = kGoogleTokenURI;
   }
 
   constexpr absl::string_view kLegacyGoogleTokenURI(
       "https://www.googleapis.com/oauth2/v3/token");
   if (token_uri == kLegacyGoogleTokenURI) {
-    LOG(WARNING) << "replace legacy token_uri:" << token_uri
-                 << " to new uri:" << kGoogleTokenURI;
+    LOG(INFO) << "replace legacy token_uri:" << token_uri
+              << " to new uri:" << kGoogleTokenURI;
     token_uri = kGoogleTokenURI;
   }
 
   std::string scope;
   if (!GetNonEmptyStringFromJson(root, kScope, &scope, &err)) {
-    LOG(WARNING) << err;
+    LOG(INFO) << err;
     scope = kGomaAuthScope;
   }
 
@@ -132,10 +132,7 @@ bool ParseOAuth2Config(const std::string& str, OAuth2Config* config) {
   }
 
   std::string type;
-  if (!GetNonEmptyStringFromJson(root, kType, &type, &err)) {
-    LOG(WARNING) << err;
-  }
-
+  (void)GetNonEmptyStringFromJson(root, kType, &type, &err);
   std::string refresh_token;
   (void)GetStringFromJson(root, kRefreshToken, &refresh_token, &err);
 

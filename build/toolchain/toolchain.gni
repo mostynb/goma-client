@@ -82,7 +82,7 @@ if (generate_linker_map) {
 declare_args() {
   if (is_clang) {
     # Clang compiler version. Clang files are placed at version-dependent paths.
-    clang_version = "16"
+    clang_version = "17"
   }
 }
 

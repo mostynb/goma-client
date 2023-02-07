@@ -703,18 +703,30 @@ def main():
   option_parser.add_option('', '--no-show-warnings', action='store_false',
                            dest='show_warnings',
                            help='do not show warning log messages')
-  option_parser.add_option('', '--show-known-warnings-threshold',
-                           default=5,
-                           help='show known warnings threshold')
-  option_parser.add_option('', '--fail-tasks-threshold',
-                           default=0,
-                           help='threshold for fail tasks')
-  option_parser.add_option('', '--errors-threshold',
-                           default=10,
-                           help='threshold for ERROR logs')
-  option_parser.add_option('', '--warnings-threshold',
-                           default=100,
-                           help='threshold for WARNING logs')
+  option_parser.add_option(
+      '',
+      '--show-known-warnings-threshold',
+      default=5,
+      type='int',
+      help='show known warnings threshold')
+  option_parser.add_option(
+      '',
+      '--fail-tasks-threshold',
+      default=0,
+      type='int',
+      help='threshold for fail tasks')
+  option_parser.add_option(
+      '',
+      '--errors-threshold',
+      default=10,
+      type='int',
+      help='threshold for ERROR logs')
+  option_parser.add_option(
+      '',
+      '--warnings-threshold',
+      default=100,
+      type='int',
+      help='threshold for WARNING logs')
   option_parser.add_option('', '--show-slow-tasks', action='store_true',
                            default=False,
                            help='show slow tasks')
@@ -725,13 +737,19 @@ def main():
                            default=2700,
                            help='show slow tasks if compiler_proxy uptime is'
                                 'longer than this seconds')
-  option_parser.add_option('', '--memory-threshold',
-                           default=-1,
-                           help='threshold for memory comsuption. '
-                                'automatically configured if negative')
-  option_parser.add_option('', '--filemiss-threshold',
-                           default=30000,
-                           help="threshold for file missed")
+  option_parser.add_option(
+      '',
+      '--memory-threshold',
+      default=-1,
+      type='int',
+      help='threshold for memory comsuption. '
+      'automatically configured if negative')
+  option_parser.add_option(
+      '',
+      '--filemiss-threshold',
+      default=30000,
+      type='int',
+      help="threshold for file missed")
   option_parser.add_option('-v', '--verbose', action='count', default=0,
                            help='verbose logging')
   option_parser.add_option('-o', '--output-json',
