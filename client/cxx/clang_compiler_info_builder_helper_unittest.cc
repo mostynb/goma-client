@@ -145,6 +145,56 @@ TEST(ClangCompilerInfoBuilderHelperTest, ParseResourceOutputPosixIgnorelist) {
   EXPECT_EQ(expected, resource);
 }
 
+TEST(ClangCompilerInfoBuilderHelperTest, ParseResourceOutputLLVMMulticall) {
+  static const char kDummyClangOutput[] =
+      "Fuchsia clang version 17.0.0\n"
+      "Target: x86_64-unknown-linux-gnu\n"
+      "Thread model: posix\n"
+      "InstalledDir: /bin\n"
+      "Found candidate GCC installation: gcc/x86_64-linux-gnu/4.6\n"
+      "Selected GCC installation: gcc/x86_64-linux-gnu/4.6\n"
+      "Candidate multilib: .;@m64\n"
+      "Selected multilib: .;@m64\n"
+      " (in-process)\n"
+      " \"/third_party/llvm-build/Release+Asserts/bin/llvm\" \"clang++\" -cc1 "
+      "-triple x86_64-unknown-linux-gnu -emit-obj -mrelax-all -disable-free "
+      "-main-file-name null -mrelocation-model static -mthread-model posix "
+      "-mdisable-fp-elim -fmath-errno -masm-verbose -mconstructor-aliases "
+      "-munwind-tables -fuse-init-array -target-cpu x86-64 "
+      "-dwarf-column-info -debugger-tuning=gdb -v -coverage-notes-file "
+      "/dev/null.gcno -resource-dir "
+      "/third_party/llvm-build/Release+Asserts/lib/clang/7.0.0 "
+      "-internal-isystem /usr/local/include -internal-isystem "
+      "/third_party/llvm-build/Release+Asserts/lib/clang/7.0.0/include "
+      "-internal-externc-isystem /usr/include/x86_64-linux-gnu "
+      "-internal-externc-isystem /include -internal-externc-isystem "
+      "/usr/include -ferror-limit 19 -fmessage-length 80 -fsanitize=address "
+      "-fprofile-list=my_profilelist.txt "
+      "-fsanitize-blacklist=my_denylist.txt "
+      "-fsanitize-system-blacklist=/third_party/llvm-build/Release+Asserts/lib/"
+      "clang/7.0.0/share/asan_denylist.txt -fsanitize-address-use-after-scope "
+      "-fno-assume-sane-operator-new -fobjc-runtime=gcc "
+      "-fdiagnostics-show-option -fcolor-diagnostics -o /dev/null -x c "
+      "/dev/null";
+  TmpdirUtil tmpdir("parse_resource_output");
+  tmpdir.CreateEmptyFile("gcc/x86_64-linux-gnu/4.6/crtbegin.o");
+  std::vector<ClangCompilerInfoBuilderHelper::ResourceList> resource;
+  EXPECT_EQ(ClangCompilerInfoBuilderHelper::ParseStatus::kSuccess,
+            ClangCompilerInfoBuilderHelper::ParseResourceOutput(
+                "/third_party/llvm-build/Release+Asserts/bin/clang",
+                tmpdir.realcwd(), kDummyClangOutput, &resource));
+  std::vector<ClangCompilerInfoBuilderHelper::ResourceList> expected = {
+      {"gcc/x86_64-linux-gnu/4.6/crtbegin.o",
+       CompilerInfoData::CLANG_GCC_INSTALLATION_MARKER},
+      {"my_denylist.txt", CompilerInfoData::CLANG_RESOURCE},
+      {"/third_party/llvm-build/Release+Asserts/lib/clang"
+       "/7.0.0/share/asan_denylist.txt",
+       CompilerInfoData::CLANG_RESOURCE},
+      {"my_profilelist.txt", CompilerInfoData::CLANG_RESOURCE},
+  };
+  EXPECT_EQ(expected, resource);
+}
+
 TEST(ClangCompilerInfoBuilderHelperTest, ParseClang11IntegratedCC1) {
   // http://b/148147812
   static const char kDummyClangOutput[] =

@@ -48,17 +48,18 @@ def IsPristine(repo):
 
 def RevParse(repo, rev):
   """Resolves a string to a git commit."""
-  return subprocess.check_output(['git', 'rev-parse', rev], cwd=repo).strip()
+  return subprocess.check_output(['git', 'rev-parse', rev], cwd=repo,
+                                 text=True).strip()
 
 
 def UpdateDEPS(deps, from_hash, to_hash):
   """Updates all references of |from_hash| to |to_hash| in |deps|."""
-  with open(deps, 'rb') as f:
+  with open(deps, 'r') as f:
     contents = f.read()
     if from_hash not in contents:
       raise Exception('%s not in DEPS' % from_hash)
   contents = contents.replace(from_hash, to_hash)
-  with open(deps, 'wb') as f:
+  with open(deps, 'w') as f:
     f.write(contents)
 
 
@@ -68,10 +69,10 @@ def main():
     return 1
 
   if not IsPristine(SRC_PATH):
-    print >>sys.stderr, 'Goma checkout not pristine.'
+    print('Goma checkout not pristine.', file=sys.stderr)
     return 0
   if not IsPristine(BORINGSSL_SRC_PATH):
-    print >>sys.stderr, 'BoringSSL checkout not pristine.'
+    print('BoringSSL checkout not pristine.', file=sys.stderr)
     return 0
 
   if len(sys.argv) > 1:
@@ -82,10 +83,10 @@ def main():
 
   old_head = RevParse(BORINGSSL_SRC_PATH, 'HEAD')
   if old_head == new_head:
-    print 'BoringSSL already up to date.'
+    print('BoringSSL already up to date.')
     return 0
 
-  print 'Rolling BoringSSL from %s to %s...' % (old_head, new_head)
+  print('Rolling BoringSSL from %s to %s...' % (old_head, new_head))
 
   UpdateDEPS(DEPS_PATH, old_head, new_head)
 
@@ -98,16 +99,16 @@ def main():
     try:
       shutil.rmtree(path)
     except OSError as e:
-      print 'failed to remove but continue %s: %s' % (path, e)
+      print('failed to remove but continue %s: %s' % (path, e))
   for f in GENERATED_FILES:
     path = os.path.join(BORINGSSL_PATH, f)
     os.unlink(path)
 
   # Generate new ones.
-  subprocess.check_call(['python',
-                         os.path.join(BORINGSSL_SRC_PATH, 'util',
-                                      'generate_build_files.py'),
-                         'gn'],
+  subprocess.check_call([
+      'python3',
+      os.path.join(BORINGSSL_SRC_PATH, 'util', 'generate_build_files.py'), 'gn'
+  ],
                         cwd=BORINGSSL_PATH)
 
   # Commit everything except dirs in .gitignore.
@@ -116,13 +117,13 @@ def main():
     with open(os.path.join(BORINGSSL_PATH, '.gitignore')) as f:
       gitignore = f.read().splitlines()
   except OSError as e:
-    print 'cannot access .gitignore file exist: %s' % e
+    print('cannot access .gitignore file exist: %s' % e)
   for entry in gitignore:
     path = os.path.join(BORINGSSL_PATH, entry)
     try:
       shutil.rmtree(path)
     except OSError as e:
-      print 'failed to remove but continue %s: %s' % (path, e)
+      print('failed to remove but continue %s: %s' % (path, e))
   subprocess.check_call(['git', 'add', DEPS_PATH], cwd=SRC_PATH)
   for (osname, arch, _, _, _) in generate_build_files.OS_ARCH_COMBOS:
     dirname = osname + '-' + arch
@@ -144,8 +145,10 @@ def main():
       subprocess.check_call(['git', 'rm', fname], cwd=SRC_PATH)
 
   commits = subprocess.check_output(
-      ['git', 'log', '--oneline', '%s..%s' % (old_head, new_head)],
-      cwd=BORINGSSL_SRC_PATH)
+      ['git', 'log', '--oneline',
+       '%s..%s' % (old_head, new_head)],
+      cwd=BORINGSSL_SRC_PATH,
+      text=True)
   message = """Roll client/third_party/boringssl/src %s..%s
 
 This CL is generated from third_party/boringssl/roll_boringssl.py
@@ -159,12 +162,15 @@ Details: https://boringssl.googlesource.com/boringssl/+log/%s..%s
   subprocess.check_call(['git', 'commit', '-m', message], cwd=SRC_PATH)
 
   # Print update notes.
-  notes = subprocess.check_output(
-      ['git', 'log', '--grep', '^Update-Note:', '-i',
-       '%s..%s' % (old_head, new_head)], cwd=BORINGSSL_SRC_PATH).strip()
+  notes = subprocess.check_output([
+      'git', 'log', '--grep', '^Update-Note:', '-i',
+      '%s..%s' % (old_head, new_head)
+  ],
+                                  cwd=BORINGSSL_SRC_PATH,
+                                  text=True).strip()
   if len(notes) > 0:
-    print "\x1b[1mThe following changes contain updating notes\x1b[0m:\n\n"
-    print notes
+    print("\x1b[1mThe following changes contain updating notes\x1b[0m:\n\n")
+    print(notes)
 
   return 0
 

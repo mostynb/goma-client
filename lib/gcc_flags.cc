@@ -1238,7 +1238,7 @@ bool GCCFlags::IsClangCommand(absl::string_view arg) {
   // allow pnacl-clang etc.
   // However, don't allow clang-tidy.
   if (stem == "clang" || stem == "clang++" || absl::EndsWith(stem, "-clang") ||
-      absl::EndsWith(stem, "-clang++"))
+      absl::EndsWith(stem, "-clang++") || stem == "llvm")
     return true;
 
   // For b/25937763 but we should not consider the followings as clang:

@@ -80,6 +80,7 @@ TEST_F(CompilerFlagsTest, CommandClassification) {
     { "/usr/local/google/home/jlebar/bin/clang++-3.7", kGCC | kClang },
     { "armv7a-cros-linux-gnueabi-clang++", kGCC | kClang },  // ChromeOS clang
     { "/usr/bin/local/clang-tidy/clang", kGCC | kClang },  // not clang-tidy.
+    { "llvm", kGCC | kClang },
     // clang (negative)
     { "clang-check", 0 },
     { "clang-tblgen", 0 },
