@@ -1122,6 +1122,19 @@ class GomaDriver:
 
   def Dispatch(self, args):
     """Parse and dispatch commands."""
+    is_update_hook = args and (args[0] == 'update_hook')
+    if is_update_hook:
+      p = subprocess.run([
+          sys.executable,
+          os.path.join(self._env.GetScriptDir(), 'goma_auth.py'), 'info'
+      ],
+                         check=False,
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL)
+      if p.returncode:
+        # user is not logged in. do nothing in update_hook
+        return
+
     is_audit = args and (args[0] == 'audit')
     if not is_audit:
       # when audit, we don't want to run gomacc to detect temp directory,

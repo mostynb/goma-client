@@ -2,7 +2,7 @@
 
 vars = {
      "chromium_git": "https://chromium.googlesource.com",
-     "clang_revision": "59d4a6deb0f4f0ec8a7d134f94a2b2fef14d444f",
+     "clang_revision": "2f9ce8ce378c30d23265a23de389165458da4df6",
      "gn_version": "git_revision:dfcbc6fed0a8352696f92d67ccad54048ad182b3",
      "mingw_version": "version:2@11.2.0-6",
      "checkout_mingw": False,
@@ -43,7 +43,7 @@ deps = {
 
      # chrome's deps/third_party/boringssl
      "client/third_party/boringssl/src":
-     "https://boringssl.googlesource.com/boringssl@bab2f96e2637acb107fe9b099c58befbca918748",
+     "https://boringssl.googlesource.com/boringssl@a02b7435ca52b81c7cce656d577c8423b1cc4bb3",
 
      # google-breakpad
      "client/third_party/breakpad/breakpad":
@@ -85,9 +85,9 @@ deps = {
      "client/third_party/benchmark/src":
      "https://github.com/google/benchmark.git@0d98dba29d66e93259db7daa53a9327df767a415",
 
-     # Jinja2 template engine v2.10
+     # Jinja2 template engine v3.1.2
      "client/third_party/jinja2":
-     "https://github.com/pallets/jinja.git@78d2f672149e5b9b7d539c575d2c1bfc12db67a9",
+     "https://github.com/pallets/jinja.git@b08cd4bc64bb980df86ed2876978ae5735572280",
 
      # Markupsafe module v1.0
      "client/third_party/markupsafe":
@@ -125,7 +125,7 @@ deps = {
          'packages': [
              {
                  'package': 'infra/3pp/tools/go/${{platform}}',
-                 'version': 'version:2@1.20.1',
+                 'version': 'version:2@1.20.2',
              },
          ],
          'dep_type': 'cipd',

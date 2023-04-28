@@ -1324,7 +1324,7 @@ bool CompileService::AcquireOutputBuffer(size_t filesize, std::string* buf) {
     if (filesize > max_sum_output_size_ ||
         req_sum_output_size_ + filesize < req_sum_output_size_ ||
         cur_sum_output_size_ + filesize < cur_sum_output_size_) {
-      LOG(ERROR) << "too large output buf size:" << filesize;
+      LOG(WARNING) << "too large output buf size:" << filesize;
       success = false;
     } else {
       req_sum_output_size_ += filesize;

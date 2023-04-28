@@ -41,7 +41,9 @@ def ReadFile(path):
 
 def IsLicenseFile(name):
   """Returns true if name looks like a license file."""
-  return name in ['LICENSE', 'LICENSE.md', 'COPYING', 'COPYING.txt']
+  return name in [
+      'LICENSE', 'LICENSE.md', 'LICENSE.rst', 'COPYING', 'COPYING.txt'
+  ]
 
 
 def FindLicense(third_party_dir, library_name):

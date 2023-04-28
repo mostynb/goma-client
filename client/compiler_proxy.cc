@@ -211,6 +211,17 @@ int main(int argc, char* argv[], const char* envp[]) {
   devtools_goma::ScopedFd lockfd(
       devtools_goma::LockMyself(lock_filename, FLAGS_COMPILER_PROXY_PORT));
   if (FLAGS_COMPILER_PROXY_DAEMON_MODE) {
+    if (!devtools_goma::GetEnv("GLOG_stderrthreshold")) {
+      // by default, glog sends ERROR log messages to stderr.
+      // ERROR log messages are written in *.ERROR file,
+      // so no need to send them to stderr, which is redirected to
+      // $GOMA_COMPILER_PROXY_DAEMON_STDERR, too.
+      // just send FATAL to stderr.
+      // https://github.com/google/glog#setting-flags
+      // b/273599194
+      devtools_goma::SetEnv("GLOG_stderrthreshold", "3");
+    }
+
     int fd[2];
     PCHECK(pipe(fd) == 0);
     pid_t pid;
