@@ -336,11 +336,15 @@ def FetchTokenInfo(config):
       'refresh_token': config['refresh_token'],
       'grant_type': 'refresh_token'
   }
-  resp = json.loads(HttpPostRequest(config['token_uri'], post_data))
+  try:
+    resp = json.loads(HttpPostRequest(config['token_uri'], post_data))
+  except subprocess.CalledProcessError:
+    resp = {'error': 'goma_fetch error'}
   if 'error' in resp:
     return {'error_description': 'obtain access token: %s' % resp['error']}
-  token_info = json.loads(HttpGetRequest(
-    TOKEN_INFO_ENDPOINT + '?access_token=' + resp['access_token']))
+  token_info = json.loads(
+      HttpGetRequest(TOKEN_INFO_ENDPOINT + '?access_token=' +
+                     resp['access_token']))
   return token_info
 
 
@@ -458,6 +462,7 @@ def Info():
   err = VerifyRefreshToken(config)
   if err:
     sys.stderr.write(err + '\n')
+    sys.stderr.write('Temporary error, or need to logout->login again\n')
     return 1
   flags = ConfigFlags(config)
   for k in flags:
@@ -527,7 +532,8 @@ def Config():
   try:
     flags = ConfigFlags(config)
   except Error as e:
-    sys.stderr.write('%s' % e)
+    sys.stderr.write('%s\n' % e)
+    sys.stderr.write('Temporary error, or need to logout->login again\n')
     return 1
   print(flags.comment)
   for k in flags:
