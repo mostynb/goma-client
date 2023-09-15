@@ -20,8 +20,8 @@ config("goma_breakpad_config") {
   include_dirs = [ "//" ]
   if (is_clang) {
     cflags = [
-      "-Wno-unused-parameter",
       "-Wno-missing-field-initializers",
+      "-Wno-unused-parameter",
     ]
   }
 }
@@ -33,9 +33,10 @@ config("tools_config") {
   ]
   if (is_clang) {
     cflags = [
+      "-Wno-fortify-source",
+      "-Wno-non-c-typedef-for-linkage",  # typedef struct{} Options
       "-Wno-tautological-constant-out-of-range-compare",
       "-Wno-unused-parameter",  # argc of main in sym_upload.cc
-      "-Wno-non-c-typedef-for-linkage",  # typedef struct{} Options
     ]
   }
   if (is_win_gcc) {

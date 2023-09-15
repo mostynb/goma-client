@@ -709,24 +709,21 @@ class GomaDriver:
     binary_version = self._GetDiskCompilerProxyVersion()
     binary_path = self._env.CompilerProxyBinary()
     versionz = self._env.ControlCompilerProxy('/versionz', check_running=True)
-    if versionz['status']:
-      running_version =  versionz['message'].strip()
-      running_binary_path = ''
-      progz = self._env.ControlCompilerProxy('/progz', check_running=False)
-      if progz['status']:
-        running_binary_path = os.path.normcase(progz['message'].strip())
-      if binary_path == running_binary_path and \
-        binary_version != running_version:
-        print('update %s -> %s @%s' % (running_version, binary_version,
-                                       binary_path))
-        # TODO: preserve flag?
-        self._RestartCompilerProxy()
-      else:
-        print(
-            'update %s@%s -> %s@%s, skip restart' %
-            (running_version, running_binary_path, binary_version, binary_path))
-    else:
-      print('compiler_proxy is not running')
+    if not versionz['status']:
+      return
+
+    running_version = versionz['message'].strip()
+    running_binary_path = ''
+    progz = self._env.ControlCompilerProxy('/progz', check_running=False)
+    if progz['status']:
+      running_binary_path = os.path.normcase(progz['message'].strip())
+    if (binary_path != running_binary_path or
+        binary_version == running_version):
+      return
+    print('update %s -> %s @%s' %
+          (running_version, binary_version, binary_path))
+    # TODO: preserve flag?
+    self._RestartCompilerProxy()
 
   def _WaitCooldown(self, wait_seconds=_MAX_COOLDOWN_WAIT):
     """Wait until compiler_proxy process have finished.
@@ -1123,6 +1120,11 @@ class GomaDriver:
     """Parse and dispatch commands."""
     is_update_hook = args and (args[0] == 'update_hook')
     if is_update_hook:
+      if not self._env.CompilerProxyRunning():
+        # compiler proxy is not running and no need to do further checks in
+        # update_hook.
+        return
+
       p = subprocess.run([
           sys.executable,
           os.path.join(self._env.GetScriptDir(), 'goma_auth.py'), 'info'

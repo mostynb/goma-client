@@ -38,58 +38,39 @@ config("no_asm_config") {
   defines = [ "OPENSSL_NO_ASM" ]
 }
 
-all_sources = crypto_sources + ssl_sources
-
-# Windows' assembly is built with NASM. The other platforms use the platform
-# assembler. Exclude Windows ARM64 because NASM targets x86 and x64 only.
-# MinGW GCC on Windows, however, does have an assembler.
-if (os == "win" && !is_msan && !is_win_gcc) {
-  import("//third_party/nasm/nasm_assemble.gni")
-  nasm_assemble("boringssl_asm") {
-    if (cpu_arch == "x64") {
-      sources = crypto_sources_win_x86_64
-    } else if (cpu_arch == "x86") {
-      sources = crypto_sources_win_x86
-    }
-    if (!is_debug) {
-      nasm_flags = [ "-DNDEBUG" ]
-    }
-  }
-} else {
-  # This has no sources on some platforms so must be a source_set.
+if (is_msan || is_win_gcc) {
+  # Disable assembly on MSan and MinGW.
+  #
+  # MSan instrumentation is incompatible with assembly optimizations.
+  # BoringSSL's GAS-compatible assembly knows how to detect MSan, but the NASM
+  # assembly does not, so we check for MSan explicitly.
+  #
+  # MinGW would need to use NASM, but building NASM with MinGW does not
+  # currently work.
   source_set("boringssl_asm") {
     visibility = [ ":*" ]  # Only targets in this file can depend on this.
-
-    sources = []
-    asmflags = []
+    public_configs = [ ":no_asm_config" ]
+  }
+} else if (os == "win" && (current_cpu == "x86" || current_cpu == "x64")) {
+  # Windows' x86 and x86_64 assembly is built with NASM.
+  import("//third_party/nasm/nasm_assemble.gni")
+  nasm_assemble("boringssl_asm") {
+    visibility = [ ":*" ]  # Only targets in this file can depend on this.
+    sources = crypto_sources_nasm
+  }
+} else {
+  # All other targets use GAS-compatible assembler. BoringSSL's assembly files
+  # are all wrapped in processor checks for the corresponding target, so there
+  # is no need to add target conditions in the build.
+  source_set("boringssl_asm") {
+    visibility = [ ":*" ]  # Only targets in this file can depend on this.
+    sources = crypto_sources_asm
     include_dirs = [ "src/include" ]
-
-    if (is_msan) {
-      public_configs = [ ":no_asm_config" ]
-    } else if (cpu_arch == "x64") {
-      if (os == "mac") {
-        sources += crypto_sources_apple_x86_64
-      } else if (os == "linux") {
-        sources += crypto_sources_linux_x86_64
-      } else {
-        public_configs = [ ":no_asm_config" ]
-      }
-    } else if (cpu_arch == "x86") {
-      if (os == "mac") {
-        sources += crypto_sources_apple_x86
-      } else if (os == "linux") {
-        sources += crypto_sources_linux_x86
-      } else {
-        public_configs = [ ":no_asm_config" ]
-      }
-    } else {
-      public_configs = [ ":no_asm_config" ]
-    }
   }
 }
 
 static_library("boringssl") {
-  sources = all_sources
+  sources = crypto_sources + ssl_sources
   deps = [ ":boringssl_asm" ]
 
   public_configs = [ ":external_config" ]

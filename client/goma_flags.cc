@@ -277,7 +277,8 @@ GOMA_DEFINE_string(COMMAND_CHECK_LEVEL, "",
                    "architecture. "
                    "\"version\" will check by version of command. "
                    "\"checksumn\" will check by checksum of command.");
-GOMA_DEFINE_string(HERMETIC, "fallback",
+GOMA_DEFINE_string(HERMETIC,
+                   "error",
                    "Hermetic mode: one of \"off\", \"fallback\" or \"error\". "
                    "If it is not \"off\", use the compiler with the same "
                    "version string and binary hash in backend.  If no such "

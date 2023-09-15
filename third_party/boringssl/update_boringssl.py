@@ -52,7 +52,8 @@ def main():
   # Generate new ones.
   subprocess.check_call([
       sys.executable,
-      os.path.join(BORINGSSL_SRC_PATH, 'util', 'generate_build_files.py'), 'gn'
+      os.path.join(BORINGSSL_SRC_PATH, 'util', 'generate_build_files.py'),
+      '--embed_test_data=false', 'gn'
   ],
                         cwd=BORINGSSL_PATH)
 

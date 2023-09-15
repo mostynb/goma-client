@@ -67,7 +67,7 @@ def CheckGNGenChecked(input_api, output_api):
     return []
 
   warnings = []
-  with input_api.temporary_directory() as tmpdir:
+  with input_api.tempfile.TemporaryDirectory() as tmpdir:
     gn_path = input_api.os_path.join(
         input_api.gclient_paths.GetBuildtoolsPlatformBinaryPath(),
         'gn' + input_api.gclient_paths.GetExeSuffix())

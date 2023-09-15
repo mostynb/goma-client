@@ -410,15 +410,15 @@ bool LocalOutputCache::ShouldInvokeGarbageCollection() const {
 
 bool LocalOutputCache::ShouldInvokeGarbageCollectionUnlocked() const {
   if (max_cache_amount_byte_ < entries_total_cache_amount_) {
-    LOG(INFO) << "GC will be invoked:"
-              << " max_cache_amount_byte=" << max_cache_amount_byte_
-              << " entries_total_cache_amount=" << entries_total_cache_amount_;
+    VLOG(1) << "GC will be invoked:"
+            << " max_cache_amount_byte=" << max_cache_amount_byte_
+            << " entries_total_cache_amount=" << entries_total_cache_amount_;
     return true;
   }
   if (max_cache_items_ < entries_.size()) {
-    LOG(INFO) << "GC will be invoked:"
-              << " max_cache_items=" << max_cache_items_
-              << " entries_size=" << entries_.size();
+    VLOG(1) << "GC will be invoked:"
+            << " max_cache_items=" << max_cache_items_
+            << " entries_size=" << entries_.size();
     return true;
   }
 
@@ -426,7 +426,13 @@ bool LocalOutputCache::ShouldInvokeGarbageCollectionUnlocked() const {
 }
 
 bool LocalOutputCache::ShouldContinueGarbageCollectionUnlocked() const {
+  if (max_cache_amount_byte_ < entries_total_cache_amount_) {
+    return true;
+  }
   if (threshold_cache_amount_byte_ < entries_total_cache_amount_) {
+    return true;
+  }
+  if (max_cache_items_ < entries_.size()) {
     return true;
   }
   if (threshold_cache_items_ < entries_.size()) {
