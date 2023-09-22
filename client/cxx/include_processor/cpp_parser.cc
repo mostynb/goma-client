@@ -962,6 +962,15 @@ CppParser::Token CppParser::ProcessIsTargetVendor(
 }
 
 CppParser::Token CppParser::ProcessIsTargetOS(const ArrayTokenList& tokens) {
+  // Darwin matches macos, ios, etc
+  // https://github.com/llvm/llvm-project/blob/3542168be0a0f3bb88b5298e4463c185a69f0357/clang/lib/Lex/PPMacroExpansion.cpp#L1438-L1441
+  if (absl::StartsWith(target_.os, "darwin")) {
+    Token token = MacroParamToken(tokens);
+    // Should it also support WatchOS, TVOS?
+    return Token(absl::StartsWith(token.string_value, "darwin") ||
+                 absl::StartsWith(token.string_value, "macos") ||
+                 absl::StartsWith(token.string_value, "ios"));
+  }
   return ProcessIsTarget("__is_target_os", tokens, target_.os);
 }
 
