@@ -103,7 +103,7 @@ class CompileService {
 
   const std::string& service_account_id() const { return service_account_id_; }
   void SetServiceAccountId(std::string account) ABSL_LOCKS_EXCLUDED(id_mu_);
-  const std::string& oauth2_email() const ABSL_LOCKS_EXCLUDED(id_mu_) {
+  const std::string oauth2_email() const ABSL_LOCKS_EXCLUDED(id_mu_) {
     AUTO_SHARED_LOCK(lock, &id_mu_);
     return oauth2_email_;
   }

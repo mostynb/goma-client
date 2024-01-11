@@ -129,15 +129,14 @@ class CompilerInfoCacheTest : public testing::Test {
     compiler_info->data_->set_hash(hash);
   }
 
-  const absl::flat_hash_map<std::string, CompilerInfoState*>& compiler_info()
+  const absl::flat_hash_map<std::string, CompilerInfoState*> compiler_info()
       const {
-    return cache_->compiler_info_;
+    return cache_->compiler_info();
   }
 
-  const absl::flat_hash_map<std::string,
-                            std::unique_ptr<absl::flat_hash_set<std::string>>>&
+  const absl::flat_hash_map<std::string, absl::flat_hash_set<std::string>*>
   keys_by_hash() const {
-    return cache_->keys_by_hash_;
+    return cache_->keys_by_hash();
   }
 
   std::unique_ptr<CompilerInfoCache> cache_;
@@ -575,8 +574,9 @@ TEST_F(CompilerInfoCacheTest, Unmarshal) {
   EXPECT_TRUE(Unmarshal(table));
 
   EXPECT_EQ(3U, compiler_info().size());
-  auto p = compiler_info().find("/usr/bin/gcc -O2 @");
-  EXPECT_TRUE(p != compiler_info().end());
+  auto ci = compiler_info();
+  auto p = ci.find("/usr/bin/gcc -O2 @");
+  EXPECT_TRUE(p != ci.end());
   CompilerInfoState* state = p->second;
   EXPECT_EQ(2, state->refcnt());
   EXPECT_EQ("gcc", state->info().data().name());
@@ -584,8 +584,8 @@ TEST_F(CompilerInfoCacheTest, Unmarshal) {
   EXPECT_TRUE(state->info().data().found());
   const std::string& hash1 = HashKey(state->info().data());
 
-  p = compiler_info().find("/usr/bin/gcc -O2 -fno-diagnostics-show-option @");
-  EXPECT_TRUE(p != compiler_info().end());
+  p = ci.find("/usr/bin/gcc -O2 -fno-diagnostics-show-option @");
+  EXPECT_TRUE(p != ci.end());
   state = p->second;
   EXPECT_EQ(2, state->refcnt());
   EXPECT_EQ("gcc", state->info().data().name());
@@ -593,8 +593,8 @@ TEST_F(CompilerInfoCacheTest, Unmarshal) {
   EXPECT_TRUE(state->info().data().found());
   EXPECT_EQ(hash1, HashKey(state->info().data()));
 
-  p = compiler_info().find("/usr/bin/g++ -O2 @");
-  EXPECT_TRUE(p != compiler_info().end());
+  p = ci.find("/usr/bin/g++ -O2 @");
+  EXPECT_TRUE(p != ci.end());
   state = p->second;
   EXPECT_EQ(1, state->refcnt());
   EXPECT_EQ("g++", state->info().data().name());
@@ -603,17 +603,18 @@ TEST_F(CompilerInfoCacheTest, Unmarshal) {
   const std::string& hash2 = HashKey(state->info().data());
   EXPECT_NE(hash1, hash2);
 
-  EXPECT_EQ(2U, keys_by_hash().size());
-  auto found = keys_by_hash().find(hash1);
-  EXPECT_TRUE(found != keys_by_hash().end());
-  const auto* keys = found->second.get();
+  const auto kbh = keys_by_hash();
+  EXPECT_EQ(2U, kbh.size());
+  auto found = kbh.find(hash1);
+  EXPECT_TRUE(found != kbh.end());
+  const auto* keys = found->second;
   EXPECT_EQ(2U, keys->size());
   EXPECT_EQ(1U, keys->count("/usr/bin/gcc -O2 @"));
   EXPECT_EQ(1U, keys->count("/usr/bin/gcc -O2 -fno-diagnostics-show-option @"));
 
-  found = keys_by_hash().find(hash2);
-  EXPECT_TRUE(found != keys_by_hash().end());
-  keys = found->second.get();
+  found = kbh.find(hash2);
+  EXPECT_TRUE(found != kbh.end());
+  keys = found->second;
   EXPECT_EQ(1U, keys->size());
   EXPECT_EQ(1U, keys->count("/usr/bin/g++ -O2 @"));
 }

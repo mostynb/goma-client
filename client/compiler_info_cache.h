@@ -150,6 +150,21 @@ class CompilerInfoCache {
   void UpdateOlderCompilerInfo() ABSL_LOCKS_EXCLUDED(mu_);
   void UpdateOlderCompilerInfoUnlocked() ABSL_EXCLUSIVE_LOCKS_REQUIRED(mu_);
 
+  const absl::flat_hash_map<std::string, CompilerInfoState*> compiler_info() {
+    AUTO_SHARED_LOCK(lock, &mu_);
+    return compiler_info_;
+  }
+
+  const absl::flat_hash_map<std::string, absl::flat_hash_set<std::string>*>
+  keys_by_hash() const {
+    absl::flat_hash_map<std::string, absl::flat_hash_set<std::string>*> ret;
+    AUTO_SHARED_LOCK(lock, &mu_);
+    for (const auto& it : keys_by_hash_) {
+      ret.emplace(it.first, it.second.get());
+    }
+    return ret;
+  }
+
   friend class CompilerInfoCacheTest;
 
   static CompilerInfoCache* instance_;

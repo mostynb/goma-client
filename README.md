@@ -1,5 +1,8 @@
 # Goma client
 
+**Goma is not maintained any more, please use
+[reclient](https://github.com/bazelbuild/reclient) instead.**
+
 *Goma* is a distributed compiler service for open-source project such as
 Chromium and Android. It's some kind of replacement of distcc+ccache.
 

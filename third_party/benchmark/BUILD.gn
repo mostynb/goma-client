@@ -5,14 +5,18 @@ config("benchmark_config") {
     # 'inline' used more than once for benchmark.h
     cflags = [ "/wd4141" ]
   }
+
+  if (os == "win") {
+    cflags = [ "-Wno-invalid-offsetof" ]
+  }
 }
 
 static_library("benchmark") {
   sources = [
     "src/src/arraysize.h",
+    "src/src/benchmark.cc",
     "src/src/benchmark_api_internal.cc",
     "src/src/benchmark_api_internal.h",
-    "src/src/benchmark.cc",
     "src/src/benchmark_main.cc",
     "src/src/benchmark_name.cc",
     "src/src/benchmark_register.cc",
